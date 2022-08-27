@@ -1,5 +1,9 @@
 # Goplicate
 
+<img src="https://github.com/ilaif/goplicate/raw/main/assets/logo.png" width="700">
+
+---
+
 Goplicate is a CLI tool that helps define common code or configuration snippets once, and sync it to multiple projects.
 
 ## Why and how
