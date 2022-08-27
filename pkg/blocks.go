@@ -1,9 +1,11 @@
 package pkg
 
 import (
+	"bytes"
 	"fmt"
 	"regexp"
 	"strings"
+	"text/template"
 
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
@@ -22,9 +24,9 @@ var (
 )
 
 var (
-	annotationIdentifier = "goplicate"
-	commentRegexp        = `(#|\/\/|\/\*|\-\-)`
-	blockRegex           = regexp.MustCompile(fmt.Sprintf(`\s*%s\s*%s\((.*)\)`, commentRegexp, annotationIdentifier))
+	commentIdentifier = "goplicate"
+	commentRegexp     = `(#|\/\/|\/\*|\-\-|<\-\-)`
+	blockRegex        = regexp.MustCompile(fmt.Sprintf(`\s*%s\s*%s\((.*)\)`, commentRegexp, commentIdentifier))
 )
 
 type Block struct {
@@ -37,6 +39,15 @@ func (b *Block) Render() string {
 }
 
 func (b *Block) SetLines(lines []string) {
+	// add a base indentation to match the one in this block (according to the first line)
+	indent := 0
+	if len(b.Lines) > 0 {
+		indent = countLeadingSpaces(b.Lines[0])
+	}
+	for i, l := range lines {
+		lines[i] = strings.Repeat(" ", indent) + l
+	}
+
 	b.Lines = lines
 }
 
@@ -66,19 +77,37 @@ func (b *Blocks) Render() string {
 	}), "\n")
 }
 
-func parseBlocksFromFile(filename string) (Blocks, error) {
-	targetPathBytes, err := readFile(filename)
+func parseBlocksFromFile(filename string, params map[string]interface{}) (Blocks, error) {
+	fileBytes, err := readFile(filename)
 	if err != nil {
 		return nil, err
 	}
 
-	targetLines := splitLines(targetPathBytes)
-	targetBlocks, err := parseBlocksFromLines(targetLines)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to parse target blocks in '%s'", filename)
+	var s string
+	if params != nil {
+		t, err := template.New("parse-blocks-tpl").Parse(string(fileBytes))
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to parse template for file '%s'", filename)
+		}
+
+		var tpl bytes.Buffer
+		if err := t.Option("missingkey=error").Execute(&tpl, params); err != nil {
+			return nil, errors.Wrapf(err, "failed to execute template for file '%s'", filename)
+		}
+
+		s = tpl.String()
+	} else {
+		s = string(fileBytes)
 	}
 
-	return targetBlocks, err
+	lines := strings.Split(s, "\n")
+
+	blocks, err := parseBlocksFromLines(lines)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to parse blocks in '%s'", filename)
+	}
+
+	return blocks, err
 }
 
 func parseBlocksFromLines(lines []string) (Blocks, error) {

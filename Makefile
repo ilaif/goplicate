@@ -13,3 +13,6 @@ lint: ## Run lint
 
 test: ## Run unit tests
 	go test -short ./...
+
+build: ## Build the binary
+	go build ./cmd/goplicate

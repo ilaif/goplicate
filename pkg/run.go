@@ -1,14 +1,12 @@
 package pkg
 
 import (
-	"path/filepath"
-
 	"github.com/pkg/errors"
 )
 
 func Run(config *RepositoryConfig) error {
 	for _, target := range config.Targets {
-		targetBlocks, err := parseBlocksFromFile(target.Path)
+		targetBlocks, err := parseBlocksFromFile(target.Path, nil)
 		if err != nil {
 			return errors.Wrapf(err, "failed to parse target blocks in '%s'", target.Path)
 		}
@@ -18,8 +16,12 @@ func Run(config *RepositoryConfig) error {
 			return err
 		}
 
-		sourcePath := filepath.Join(config.Source, targetSource.Path)
-		sourceBlocks, err := parseBlocksFromFile(sourcePath)
+		var params map[string]interface{}
+		if err := readYaml(target.ParamsPath, &params); err != nil {
+			return errors.Wrap(err, "failed to parse params")
+		}
+
+		sourceBlocks, err := parseBlocksFromFile(targetSource.Path, params)
 		if err != nil {
 			return errors.Wrapf(err, "failed to parse source blocks in '%s'", target.Path)
 		}

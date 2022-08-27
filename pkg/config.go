@@ -5,10 +5,10 @@ const (
 )
 
 type RepositoryConfig struct {
-	Source  string `yaml:"source"`
 	Targets []struct {
-		Path   string `yaml:"path"`
-		Source string `yaml:"source"`
+		Path       string `yaml:"path"`
+		Source     string `yaml:"source"`
+		ParamsPath string `yaml:"params"`
 	} `yaml:"targets"`
 }
 
