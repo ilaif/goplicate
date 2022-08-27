@@ -1,0 +1,35 @@
+linters:
+  disable-all: true
+  enable:
+    # fast linters:
+    - gofmt
+    - goimports
+    - gocyclo
+    - goconst
+    - misspell
+    - ineffassign
+    - lll
+    - gci
+    - nlreturn
+    - forbidigo
+    # slow linters:
+    - deadcode
+    - gosec
+    - gosimple
+    - govet
+    - errcheck
+    - gocritic
+    - importas
+    - revive
+    - typecheck
+    - unused
+    - varcheck
+    - wrapcheck
+linters-settings:
+  gci: { sections: [standard, default, prefix(github.com/ilaif/goplicate)] }
+  wrapcheck: { ignorePackageGlobs: ["github.com/ilaif/goplicate/**"] }
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+run:
+  timeout: 3m
