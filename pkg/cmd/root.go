@@ -8,7 +8,7 @@ import (
 
 var rootCmd = &cobra.Command{
 	Use:   "goplicate",
-	Short: "Copy code or configuration snippets from a source repository to multiple target projects",
+	Short: "Sync code or configuration snippets from a source repository to multiple target projects",
 }
 
 func Execute() {

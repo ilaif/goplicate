@@ -14,7 +14,7 @@ type TargetSource struct {
 func parseTargetSource(s string) (*TargetSource, error) {
 	split := strings.Split(s, ":")
 	if len(split) > 2 {
-		return nil, errors.Errorf("invalid target source path '%s'. should be of the form '<path>:<version>'", s)
+		return nil, errors.Errorf("Invalid target source path '%s'. Should be of the form '<path>:<version>'", s)
 	}
 
 	targetSource := &TargetSource{

@@ -8,7 +8,7 @@ Goplicate is a CLI tool that helps define common code or configuration snippets 
 
 ## Why and how
 
-In cases where we have many snippets that are repeated between different repositories in the same project or across projects, it becomes a real hassle to keep them up-to-date.
+In cases where we have many snippets that are repeated between different repositories or projects, it becomes a real hassle to keep them up-to-date.
 
 We want to stay [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself).
 
@@ -58,7 +58,7 @@ For each project, add a `goplicate` comment that will denote a section as manage
 repos:
   # goplicate(name=common,pos=start)
   - repo: https://github.com/some/repo
-    rev: v{{.some_repo_version}} # optionally add params
+    rev: v1.2.3 # optionally add params
     hooks:
       - id: my-common-pre-commit-hook
   # goplicate(name=common,pos=end)
@@ -89,7 +89,7 @@ Define the Goplicate repository in the `source` path (in our example, `../goplic
 ```yaml
   # goplicate(name=common,pos=start)
   - repo: https://github.com/some/repo
-    rev: v1.3.0
+    rev: v{{.some_repo_version}}
     hooks:
       - id: my-common-pre-commit-hook
   # goplicate(name=common,pos=end)
@@ -100,5 +100,7 @@ Define the Goplicate repository in the `source` path (in our example, `../goplic
 ```yaml
 some_repo_version: "1.3.0"
 ```
+
+### Profit
 
 Now, if we run `goplicate run` from one of our defined projects, we'll see that `rev` was changed from `v1.2.4` to `v1.3.0`!

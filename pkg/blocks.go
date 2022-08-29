@@ -38,17 +38,26 @@ func (b *Block) Render() string {
 	return strings.Join(b.Lines, "\n")
 }
 
+func (b *Block) Compare(lines []string) string {
+	return linesDiff(b.Lines, b.padLines(lines))
+}
+
 func (b *Block) SetLines(lines []string) {
-	// add a base indentation to match the one in this block (according to the first line)
+	b.Lines = b.padLines(lines)
+}
+
+// padLines add a base indentation to match the one in this block (according to the first line)
+func (b *Block) padLines(lines []string) []string {
+	paddedLines := make([]string, len(lines))
 	indent := 0
 	if len(b.Lines) > 0 {
 		indent = countLeadingSpaces(b.Lines[0])
 	}
 	for i, l := range lines {
-		lines[i] = strings.Repeat(" ", indent) + l
+		paddedLines[i] = strings.Repeat(" ", indent) + l
 	}
 
-	b.Lines = lines
+	return paddedLines
 }
 
 type Blocks []*Block
@@ -87,12 +96,12 @@ func parseBlocksFromFile(filename string, params map[string]interface{}) (Blocks
 	if params != nil {
 		t, err := template.New("parse-blocks-tpl").Parse(string(fileBytes))
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to parse template for file '%s'", filename)
+			return nil, errors.Wrapf(err, "Failed to parse template for file '%s'", filename)
 		}
 
 		var tpl bytes.Buffer
 		if err := t.Option("missingkey=error").Execute(&tpl, params); err != nil {
-			return nil, errors.Wrapf(err, "failed to execute template for file '%s'", filename)
+			return nil, errors.Wrapf(err, "Failed to execute template for file '%s'", filename)
 		}
 
 		s = tpl.String()
@@ -104,7 +113,7 @@ func parseBlocksFromFile(filename string, params map[string]interface{}) (Blocks
 
 	blocks, err := parseBlocksFromLines(lines)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to parse blocks in '%s'", filename)
+		return nil, errors.Wrapf(err, "Failed to parse blocks in '%s'", filename)
 	}
 
 	return blocks, err
@@ -150,8 +159,8 @@ func parseBlocksFromLines(lines []string) (Blocks, error) {
 			startI = i
 			curBlock = nil
 		default:
-			return nil, errors.Errorf("every block must have a position and cannot be nested"+
-				"or interleaved with other blocks. params: '%s'", params)
+			return nil, errors.Errorf("Every block must have a position and cannot be nested"+
+				"or interleaved with other blocks. Params: '%s'", params)
 		}
 	}
 
@@ -160,7 +169,7 @@ func parseBlocksFromLines(lines []string) (Blocks, error) {
 			curBlock.Lines = lines[startI:]
 			blocks.add(curBlock)
 		} else {
-			return nil, errors.Errorf("every block must have an 'end' position")
+			return nil, errors.Errorf("Every block must have an 'end' position")
 		}
 	}
 
@@ -178,7 +187,7 @@ func parseBlockParams(params string) (*blockParams, error) {
 	for _, p := range strings.Split(params, ",") {
 		splitP := strings.Split(p, "=")
 		if len(splitP) != 2 {
-			return nil, errors.Errorf("block parameter '%s' is not of the form 'name=value'", p)
+			return nil, errors.Errorf("Block parameter '%s' is not of the form 'name=value'", p)
 		}
 		paramName := splitP[0]
 		paramValue := splitP[1]
@@ -188,16 +197,16 @@ func parseBlockParams(params string) (*blockParams, error) {
 		case "pos":
 			bp.pos = paramValue
 		default:
-			return nil, errors.Errorf("unknown block parameter name '%s'", p)
+			return nil, errors.Errorf("Unknown block parameter name '%s'", p)
 		}
 	}
 
 	if bp.name == "" {
-		return nil, errors.Errorf("block parameter 'name' cannot be empty")
+		return nil, errors.Errorf("Block parameter 'name' cannot be empty")
 	}
 
 	if !lo.Contains(PosList, bp.pos) {
-		return nil, errors.Errorf("block parameter 'pos' must be one of %s", PosList)
+		return nil, errors.Errorf("Block parameter 'pos' must be one of %s", PosList)
 	}
 
 	return bp, nil

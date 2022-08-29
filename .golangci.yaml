@@ -26,6 +26,7 @@ linters:
     - varcheck
     - wrapcheck
 linters-settings:
+  forbidigo: { forbid: ['fmt\.Errorf.*'] }
   gci: { sections: [standard, default, prefix(github.com/ilaif/goplicate)] }
   wrapcheck: { ignorePackageGlobs: ["github.com/ilaif/goplicate/**"] }
 issues:
