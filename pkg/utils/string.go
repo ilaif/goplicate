@@ -1,9 +1,9 @@
-package pkg
+package utils
 
 import (
 	"strings"
 )
 
-func countLeadingSpaces(line string) int {
+func CountLeadingSpaces(line string) int {
 	return len(line) - len(strings.TrimLeft(line, " "))
 }

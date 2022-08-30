@@ -1,18 +1,22 @@
 package cmd
 
 import (
+	"context"
 	"os"
 
 	"github.com/spf13/cobra"
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "goplicate",
-	Short: "Sync code or configuration snippets from a source repository to multiple target projects",
+	Use:          "goplicate",
+	Short:        "Sync code or configuration snippets from a source repository to multiple target projects",
+	SilenceUsage: true,
 }
 
 func Execute() {
-	if err := rootCmd.Execute(); err != nil {
+	ctx := context.Background()
+
+	if err := rootCmd.ExecuteContext(ctx); err != nil {
 		os.Exit(1)
 	}
 }

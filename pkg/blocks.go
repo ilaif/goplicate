@@ -9,6 +9,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
+
+	"github.com/ilaif/goplicate/pkg/utils"
 )
 
 const (
@@ -51,7 +53,7 @@ func (b *Block) padLines(lines []string) []string {
 	paddedLines := make([]string, len(lines))
 	indent := 0
 	if len(b.Lines) > 0 {
-		indent = countLeadingSpaces(b.Lines[0])
+		indent = utils.CountLeadingSpaces(b.Lines[0])
 	}
 	for i, l := range lines {
 		paddedLines[i] = strings.Repeat(" ", indent) + l
@@ -87,7 +89,7 @@ func (b *Blocks) Render() string {
 }
 
 func parseBlocksFromFile(filename string, params map[string]interface{}) (Blocks, error) {
-	fileBytes, err := readFile(filename)
+	fileBytes, err := utils.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
@@ -154,13 +156,13 @@ func parseBlocksFromLines(lines []string) (Blocks, error) {
 			curBlock = &Block{Name: params.name}
 		case params.pos == PosEnd && curBlock != nil:
 			// if we see a block end with a currently active curBlock, we'll close it
-			curBlock.Lines = lines[startI:i]
+			curBlock.Lines = lines[startI : i+1]
 			blocks.add(curBlock)
-			startI = i
+			startI = i + 1
 			curBlock = nil
 		default:
-			return nil, errors.Errorf("Every block must have a position and cannot be nested"+
-				"or interleaved with other blocks. Params: '%s'", params)
+			return nil, errors.Errorf("Every block must have a position and cannot be nested "+
+				"or interleaved with other blocks. Params: '%+v'", params)
 		}
 	}
 

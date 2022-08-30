@@ -1,5 +1,7 @@
 package pkg
 
+import "github.com/ilaif/goplicate/pkg/utils"
+
 const (
 	defaultProjectConfigFilename  = ".goplicate.yaml"
 	defaultProjectsConfigFilename = ".goplicate-projects.yaml"
@@ -17,7 +19,7 @@ type ProjectConfig struct {
 
 func LoadProjectConfig() (*ProjectConfig, error) {
 	config := &ProjectConfig{}
-	if err := readYaml(defaultProjectConfigFilename, config); err != nil {
+	if err := utils.ReadYaml(defaultProjectConfigFilename, config); err != nil {
 		return nil, err
 	}
 
@@ -32,7 +34,7 @@ type ProjectsConfig struct {
 
 func LoadProjectsConfig() (*ProjectsConfig, error) {
 	config := &ProjectsConfig{}
-	if err := readYaml(defaultProjectsConfigFilename, config); err != nil {
+	if err := utils.ReadYaml(defaultProjectsConfigFilename, config); err != nil {
 		return nil, err
 	}
 

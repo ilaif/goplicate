@@ -1,11 +1,11 @@
-package pkg
+package utils
 
 import (
 	"github.com/AlecAivazis/survey/v2"
 )
 
-// askUserYesNoQuestion ask a question and wait for user input.
-func askUserYesNoQuestion(question string) bool {
+// AskUserYesNoQuestion ask a question and wait for user input.
+func AskUserYesNoQuestion(question string) bool {
 	var continueToAuth bool
 
 	if err := survey.AskOne(&survey.Confirm{

@@ -1,4 +1,4 @@
-package pkg
+package utils
 
 import (
 	"io/fs"
@@ -10,7 +10,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func readFile(filename string) ([]byte, error) {
+func ReadFile(filename string) ([]byte, error) {
 	filename, err := filepath.Abs(filename)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to get absolute path for file '%s'", filename)
@@ -24,7 +24,7 @@ func readFile(filename string) ([]byte, error) {
 	return buf, nil
 }
 
-func writeStringToFile(filename string, text string) error {
+func WriteStringToFile(filename string, text string) error {
 	if err := os.WriteFile(filename, []byte(text), fs.FileMode(os.O_WRONLY)); err != nil {
 		return errors.Wrapf(err, "Failed to write to file '%s'", filename)
 	}
@@ -32,8 +32,8 @@ func writeStringToFile(filename string, text string) error {
 	return nil
 }
 
-func readYaml(filename string, config interface{}) error {
-	buf, err := readFile(filename)
+func ReadYaml(filename string, config interface{}) error {
+	buf, err := ReadFile(filename)
 	if err != nil {
 		return err
 	}
