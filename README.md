@@ -75,7 +75,10 @@ Initialize a new `.goplicate.yaml` file in each of the projects:
 targets:
   - path: .pre-commit-hooks.yaml
     source: ../goplicate/pre-commit-common.yaml
-    params: ../goplicate/params.yaml
+    params: [../goplicate/params.yaml]
+hooks:
+  post:
+    - a command to validate the change
 ```
 
 Where `targets` is a list of configurations to apply to `path` from `source` templated with data from `params`

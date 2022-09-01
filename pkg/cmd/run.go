@@ -10,7 +10,7 @@ import (
 
 var runCmd = &cobra.Command{
 	Use:   "run",
-	Short: "Run goplicate on the target repository",
+	Short: "Sync the project in the current directory",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
 
@@ -24,6 +24,7 @@ var runCmd = &cobra.Command{
 			runFlagsOpts.confirm,
 			runFlagsOpts.publish,
 			runFlagsOpts.allowDirty,
+			runFlagsOpts.force,
 			runFlagsOpts.baseBranch,
 		)
 		if err := pkg.Run(ctx, config, runOpts); err != nil {

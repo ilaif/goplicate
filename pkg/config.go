@@ -8,13 +8,18 @@ const (
 )
 
 type Target struct {
-	Path       string `yaml:"path"`
-	Source     string `yaml:"source"`
-	ParamsPath string `yaml:"params"`
+	Path        string   `yaml:"path"`
+	Source      string   `yaml:"source"`
+	ParamsPaths []string `yaml:"params"`
+}
+
+type Hooks struct {
+	Post []string `yaml:"post"`
 }
 
 type ProjectConfig struct {
 	Targets []Target `yaml:"targets"`
+	Hooks   Hooks    `yaml:"hooks"`
 }
 
 func LoadProjectConfig() (*ProjectConfig, error) {

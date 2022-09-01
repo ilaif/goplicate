@@ -65,7 +65,7 @@ func (p *Publisher) Publish(ctx context.Context, filePaths []string) error {
 		}
 	}
 	defer func() {
-		if err := p.worktree.Checkout(&git.CheckoutOptions{Branch: origHeadRef.Name(), Keep: true}); err != nil {
+		if err := p.worktree.Checkout(&git.CheckoutOptions{Branch: origHeadRef.Name()}); err != nil {
 			fmt.Printf("ERROR: Failed to checkout back to original branch '%s'\n", p.baseBranch)
 		}
 	}()
@@ -85,7 +85,7 @@ func (p *Publisher) Publish(ctx context.Context, filePaths []string) error {
 		return errors.Wrap(err, "Failed to create new branch")
 	}
 
-	if err := p.worktree.Checkout(&git.CheckoutOptions{Branch: ref.Name(), Keep: true}); err != nil {
+	if err := p.worktree.Checkout(&git.CheckoutOptions{Branch: ref.Name()}); err != nil {
 		return errors.Wrap(err, "Failed to checkout branch")
 	}
 
@@ -113,7 +113,7 @@ func (p *Publisher) Publish(ctx context.Context, filePaths []string) error {
 	resp := string(outBytes)
 	alreadyExists := strings.Contains(resp, "already exists:")
 	if err != nil && !alreadyExists {
-		return errors.Wrapf(err, "Failed to push changes: %s", resp)
+		return errors.Wrapf(err, "Failed to create a PR: %s", resp)
 	}
 
 	if alreadyExists {

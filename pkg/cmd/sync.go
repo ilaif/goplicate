@@ -33,6 +33,7 @@ var syncCmd = &cobra.Command{
 			runFlagsOpts.confirm,
 			runFlagsOpts.publish,
 			runFlagsOpts.allowDirty,
+			runFlagsOpts.force,
 			runFlagsOpts.baseBranch,
 		)
 

@@ -3,8 +3,11 @@ package pkg
 import (
 	"context"
 	"fmt"
+	"os/exec"
+	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/samber/lo"
 
 	"github.com/ilaif/goplicate/pkg/git"
 	"github.com/ilaif/goplicate/pkg/utils"
@@ -15,16 +18,18 @@ type RunOpts struct {
 	Confirm    bool
 	Publish    bool
 	AllowDirty bool
+	Force      bool
 	BaseBranch string
 }
 
-func NewRunOpts(dryRun, confirm, publish, allowDirty bool, baseBranch string) *RunOpts {
+func NewRunOpts(dryRun, confirm, publish, allowDirty, force bool, baseBranch string) *RunOpts {
 	return &RunOpts{
 		DryRun:     dryRun,
 		Confirm:    confirm,
 		Publish:    publish,
 		AllowDirty: allowDirty,
 		BaseBranch: baseBranch,
+		Force:      force,
 	}
 }
 
@@ -50,7 +55,37 @@ func Run(ctx context.Context, config *ProjectConfig, runOpts *RunOpts) error {
 		}
 	}
 
-	if !runOpts.DryRun && runOpts.Publish && len(updatedTargetPaths) > 0 {
+	if !runOpts.Force && len(updatedTargetPaths) == 0 {
+		return nil
+	}
+
+	if !runOpts.DryRun {
+		for _, hook := range config.Hooks.Post {
+			fmt.Printf("Running post hook '%s'\n", hook)
+
+			cmdParts := strings.Split(hook, " ")
+			args := []string{}
+			if len(cmdParts) > 0 {
+				args = append(args, cmdParts[1:]...)
+			}
+
+			outBytes, err := exec.CommandContext(ctx, cmdParts[0], args...).CombinedOutput() // nolint:gosec
+			out := string(outBytes)
+			if err != nil {
+				return errors.Wrapf(err, "Failed to run post hook '%s': %s", hook, out)
+			}
+
+			if out != "" {
+				fmt.Printf("Output: %s\n", out)
+			}
+		}
+	}
+
+	if !runOpts.DryRun && runOpts.Publish {
+		if !runOpts.Confirm && !utils.AskUserYesNoQuestion("Do you want to publish the above changes?") {
+			return errors.New("User aborted")
+		}
+
 		if err := publisher.Publish(ctx, updatedTargetPaths); err != nil {
 			return errors.Wrap(err, "Failed to publish changes")
 		}
@@ -70,9 +105,13 @@ func runTarget(target Target, runOpts *RunOpts) (bool, error) {
 		return false, err
 	}
 
-	var params map[string]interface{}
-	if err := utils.ReadYaml(target.ParamsPath, &params); err != nil {
-		return false, errors.Wrap(err, "Failed to parse params")
+	params := map[string]interface{}{}
+	for _, paramsPath := range target.ParamsPaths {
+		var curParams map[string]interface{}
+		if err := utils.ReadYaml(paramsPath, &curParams); err != nil {
+			return false, errors.Wrap(err, "Failed to parse params")
+		}
+		params = lo.Assign(params, curParams)
 	}
 
 	sourceBlocks, err := parseBlocksFromFile(targetSource.Path, params)
