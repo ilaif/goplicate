@@ -14,6 +14,14 @@ We want to stay [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself).
 
 Goplicate achieves that by defining "blocks" around such shared snippets and automates their update via a shared source that contains the most up-to-date version of those snippets.
 
+## Installation
+
+Install a development version with:
+
+`go install github.com/ilaif/goplicate/cmd/goplicate@main`
+
+> No official releases are available since Goplicate is still in early development.
+
 ## Design principles
 
 - Keep it simple - Treat snippets as text, not assuming anything about structure or correctness.
