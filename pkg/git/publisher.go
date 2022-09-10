@@ -105,8 +105,8 @@ func (p *Publisher) Publish(ctx context.Context, filePaths []string) error {
 		return errors.Wrapf(err, "Failed to push changes: %s", string(outBytes))
 	}
 
-	prBody := fmt.Sprintf("# Update goplicate snippets\n\nUpdated "+
-		"goplicate snippets:\n\n%s", strings.Join(filePaths, "\n"))
+	changedPathsStr := strings.Join(lo.Map(filePaths, func(path string, _ int) string { return "* " + path }), "\n")
+	prBody := fmt.Sprintf("# Update goplicate snippets\n\nUpdated files:\n\n%s", changedPathsStr)
 	outBytes, err := exec.
 		CommandContext(ctx, "gh", "pr", "create", "--title", commitMsg, "--body", prBody).
 		CombinedOutput()

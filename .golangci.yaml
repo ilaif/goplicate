@@ -2,7 +2,6 @@ linters:
   disable-all: true
   enable:
     # fast linters:
-    - gofmt
     - goimports
     - gocyclo
     - goconst
@@ -12,8 +11,8 @@ linters:
     - gci
     - nlreturn
     - forbidigo
+    - reassign
     # slow linters:
-    - deadcode
     - gosec
     - gosimple
     - govet
@@ -23,7 +22,6 @@ linters:
     - revive
     - typecheck
     - unused
-    - varcheck
     - wrapcheck
 linters-settings:
   forbidigo: { forbid: ['fmt\.Errorf.*'] }

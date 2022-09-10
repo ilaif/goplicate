@@ -1,0 +1,14 @@
+repos:
+  # goplicate(name=common,pos=start)
+  - name: common
+    hooks:
+      - id: my-common-pre-commit-hook
+  # goplicate(name=common,pos=end)
+  - name: local
+    hooks:
+      - id: my-project-1-pre-commit-hook
+  # goplicate_start(name=external)
+  - name: external
+    hooks:
+      - id: my-external-pre-commit-hook
+  # goplicate_end(name=external)

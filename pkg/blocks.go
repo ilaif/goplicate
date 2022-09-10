@@ -2,7 +2,6 @@ package pkg
 
 import (
 	"bytes"
-	"fmt"
 	"regexp"
 	"strings"
 	"text/template"
@@ -23,12 +22,12 @@ const (
 
 var (
 	PosList = []string{PosStart, PosEnd}
-)
 
-var (
-	commentIdentifier = "goplicate"
-	commentRegexp     = `(#|\/\/|\/\*|\-\-|<\-\-)`
-	blockRegex        = regexp.MustCompile(fmt.Sprintf(`\s*%s\s*%s\((.*)\)`, commentRegexp, commentIdentifier))
+	// regex decomposition:
+	// 1. empty spaces: \s*
+	// 2. identifying comments: (#|\/\/|\/\*|\-\-|<\-\-)
+	// 3. goplicate block format: goplicate_start|end(...params...)
+	blockRegex = regexp.MustCompile(`\s*(#|\/\/|\/\*|\-\-|<\-\-)\s*goplicate(_(start|end))?\((.*)\)`)
 )
 
 type Block struct {
@@ -127,19 +126,16 @@ func parseBlocksFromLines(lines []string) (Blocks, error) {
 	var startI int
 	var curBlock *Block
 	for i, l := range lines {
-		matches := blockRegex.FindStringSubmatch(l)
-		if len(matches) != 3 {
+		params, err := parseBlockComment(l)
+		if err != nil {
+			return nil, err
+		} else if params == nil {
 			// if not a block comment, open an empty block
 			if curBlock == nil {
 				curBlock = &Block{Name: ""}
 			}
 
 			continue
-		}
-
-		params, err := parseBlockParams(matches[2])
-		if err != nil {
-			return nil, err
 		}
 
 		if params.pos == PosStart && curBlock != nil && curBlock.Name == "" {
@@ -183,8 +179,30 @@ type blockParams struct {
 	pos  string
 }
 
-func parseBlockParams(params string) (*blockParams, error) {
+func parseBlockComment(l string) (*blockParams, error) {
+	matches := blockRegex.FindStringSubmatch(l)
+	if len(matches) != 5 {
+		// if not a block comment, return nil
+		return nil, nil
+	}
+
+	startEndBlock := matches[3]
+	paramsStr := matches[4]
+
+	params, err := parseBlockParams(startEndBlock, paramsStr)
+	if err != nil {
+		return nil, err
+	}
+
+	return params, nil
+}
+
+func parseBlockParams(startEndBlock string, params string) (*blockParams, error) {
 	bp := &blockParams{}
+
+	if startEndBlock != "" {
+		bp.pos = startEndBlock
+	}
 
 	for _, p := range strings.Split(params, ",") {
 		splitP := strings.Split(p, "=")
