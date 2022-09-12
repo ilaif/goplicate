@@ -12,3 +12,8 @@ repos:
     hooks:
       - id: my-external-pre-commit-hook
   # goplicate_end(name=external)
+  # goplicate-start:new
+  - name: new
+    hooks:
+      - id: my-new-pre-commit-hook
+  # goplicate-end:new

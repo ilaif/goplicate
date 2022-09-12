@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"bytes"
+	"fmt"
 	"regexp"
 	"strings"
 	"text/template"
@@ -26,8 +27,8 @@ var (
 	// regex decomposition:
 	// 1. empty spaces: \s*
 	// 2. identifying comments: (#|\/\/|\/\*|\-\-|<\-\-)
-	// 3. goplicate block format: goplicate_start|end(...params...)
-	blockRegex = regexp.MustCompile(`\s*(#|\/\/|\/\*|\-\-|<\-\-)\s*goplicate(_(start|end))?\((.*)\)`)
+	// 3. goplicate block format: goplicate_start|end(...params...) or goplicate-start:<name>
+	blockRegex = regexp.MustCompile(`\s*(#|\/\/|\/\*|\-\-|<\-\-)\s*goplicate([_\-](start|end))?(\((.*)\)|:(.*))`)
 )
 
 type Block struct {
@@ -181,20 +182,19 @@ type blockParams struct {
 
 func parseBlockComment(l string) (*blockParams, error) {
 	matches := blockRegex.FindStringSubmatch(l)
-	if len(matches) != 5 {
+	if len(matches) != 7 {
 		// if not a block comment, return nil
 		return nil, nil
 	}
 
 	startEndBlock := matches[3]
-	paramsStr := matches[4]
-
-	params, err := parseBlockParams(startEndBlock, paramsStr)
-	if err != nil {
-		return nil, err
+	paramsStr := matches[5]
+	if matches[6] != "" {
+		// Assume the format is "goplicate-start:<name>""
+		paramsStr = fmt.Sprintf("name=%s", matches[6])
 	}
 
-	return params, nil
+	return parseBlockParams(startEndBlock, paramsStr)
 }
 
 func parseBlockParams(startEndBlock string, params string) (*blockParams, error) {
