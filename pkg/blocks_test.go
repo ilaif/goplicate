@@ -53,6 +53,16 @@ func TestParseBlocks(t *testing.T) {
 					},
 				},
 				{
+					Name: "new",
+					Lines: []string{
+						"  # goplicate-start:new",
+						"  - name: new",
+						"    hooks:",
+						"      - id: my-new-pre-commit-hook",
+						"  # goplicate-end:new",
+					},
+				},
+				{
 					Name: "",
 					Lines: []string{
 						"",

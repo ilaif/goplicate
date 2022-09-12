@@ -4,7 +4,7 @@
 
 ---
 
-Goplicate is a CLI tool that helps define common code or configuration snippets once, and sync it to multiple projects.
+Goplicate is a CLI tool that helps define common code or configuration snippets once and sync them to multiple projects.
 
 ## Why and how
 
@@ -16,102 +16,102 @@ Goplicate achieves that by defining "blocks" around such shared snippets and aut
 
 ## Installation
 
-Install a development version with:
+Run `go install github.com/ilaif/goplicate/cmd/goplicate@latest`
 
-`go install github.com/ilaif/goplicate/cmd/goplicate@main`
+## Usage
 
-> No official releases are available since Goplicate is still in early development.
+`goplicate --help`
 
 ## Design principles
 
-- Keep it simple - Treat snippets as text, not assuming anything about structure or correctness.
+* 🌵 Stay DRY - Write a configuration once, and have it synced across many projects.
+* 🤤 [Keep It Stupid Simple (KISS)](https://en.wikipedia.org/wiki/KISS_principle) - Treat configuration snippets as simple text, not assuming anything about structure.
+* 🙆🏻‍♀️ Allow flexibility, but not too much - Allow syncing whole files, or parts of them (currently, line-based).
+* 😎 Automate all the things - After an initial configuration, automates the rest.
 
-## Example use case
+## Features
 
-Let's say that we have a common configuration that we need to maintain for multiple projects. In this example, we'll use an imaginary `.pre-commit-config.yaml` ([https://pre-commit.com](pre-commit.com)):
+* Configure line-based blocks that should be synced across multiple projects and files.
+* See comfortable diffs while updating config files.
+* Template support using [Go Templates](https://pkg.go.dev/text/template) with dynamic parameters or conditions.
+* Sync multiple repositories with a single command.
+* Automatically run post hooks to validate that the updates worked well before opening a pull request.
+* Open a GitHub Pull Request (assuming [GitHub CLI](https://cli.github.com/) is installed and configured).
 
-Project 1:
+## Example
 
-```yaml
-repos:
-  - repo: https://github.com/some/repo
-    rev: v1.2.3
-    hooks:
-      - id: my-common-pre-commit-hook
-  - repo: local
-    hooks:
-      - id: my-project-1-pre-commit-hook
+Let's say that we have a common configuration that we need to maintain for multiple projects. In this example, we'll use an `.eslintrc.js`:
+
+1️⃣ Choose a config file that some of its contents are copied across multiple projects:
+
+`.eslintrc.js`:
+
+```txt
+module.exports = {
+    "extends": "eslint:recommended",
+    "rules": {
+        // enable additional rules
+        "indent": ["error", 4],
+        "linebreak-style": ["error", "unix"],
+        "quotes": ["error", "double"],
+        "semi": ["error", "always"],
+
+        // override configuration set by extending "eslint:recommended"
+        "no-empty": "warn",
+        "no-cond-assign": ["error", "always"],
+    }
+}
 ```
 
-Project 2:
+2️⃣ Add goplicate block comments for the `common-rules` synced snippet:
 
-```yaml
-repos:
-  - repo: https://github.com/some/repo
-    rev: v1.2.3
-    hooks:
-      - id: my-common-pre-commit-hook
-  - repo: local
-    hooks:
-      - id: my-project-2-pre-commit-hook
+```diff
+module.exports = {
+    "extends": "eslint:recommended",
+    "rules": {
++       // goplicate-start:common-rules
+        // enable additional rules
+        "indent": ["error", 2],
+        "linebreak-style": ["error", "unix"],
+        "quotes": ["error", "double"],
+        "semi": ["error", "always"],
++       // goplicate-end:common-rules
+
+        // override configuration set by extending "eslint:recommended"
+        "no-empty": "warn",
+        "no-cond-assign": ["error", "always"],
+    }
+}
 ```
 
-If we have many such projects that we have to maintain the common pre-commit hook for, it starts getting messy. Goplicate comes to the rescue!
+3️⃣ Create a separate, centralized repository to manage all of the shared config files. We'll name it `goplicate` and add a base `.eslintrc.js.tpl` file with the `common-rules` snippet that we want to sync:
 
-### Step 1
-
-For each project, add a `goplicate` comment that will denote a section as managed by Goplicate:
-
-```yaml
-repos:
-  # goplicate(name=common,pos=start)
-  - repo: https://github.com/some/repo
-    rev: v1.2.3 # optionally add params
-    hooks:
-      - id: my-common-pre-commit-hook
-  # goplicate(name=common,pos=end)
-  - repo: local
-    hooks:
-      - id: my-project-1-pre-commit-hook
+```js
+// goplicate-start:common-rules
+// enable additional rules
+"indent": ["error", 4],
+"linebreak-style": ["error", "unix"],
+"quotes": ["error", "double"],
+"semi": ["error", "always"],
+// goplicate-end:common-rules
 ```
 
-### Step 2
-
-Initialize a new `.goplicate.yaml` file in each of the projects:
+4️⃣ Go back to the original project, and create a `.goplicate.yaml` file in your project root folder:
 
 ```yaml
 targets:
-  - path: .pre-commit-hooks.yaml
-    source: ../goplicate/pre-commit-common.yaml
-    params: [../goplicate/params.yaml]
-hooks:
-  post:
-    - a command to validate the change
+  - path: .eslintrc.js
+    source: ../goplicate/.eslintrc.js.tpl
 ```
 
-Where `targets` is a list of configurations to apply to `path` from `source` templated with data from `params`
+5️⃣ Finally, run goplicate on the repository to sync any updates:
 
-### Step 3
+<img src="https://github.com/ilaif/goplicate/raw/main/assets/goplicate-run.gif" width="700">
 
-Define the Goplicate repository in the `source` path (in our example, `../goplicate`) with the following files inside:
+## Contributing
 
-.pre-commit-common.yaml:
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change. See [CONTRIBUTING.md](CONTRIBUTING.md) for more information.
 
-```yaml
-  # goplicate(name=common,pos=start)
-  - repo: https://github.com/some/repo
-    rev: v{{.some_repo_version}}
-    hooks:
-      - id: my-common-pre-commit-hook
-  # goplicate(name=common,pos=end)
-```
+## License
 
-.params.yaml:
-
-```yaml
-some_repo_version: "1.3.0"
-```
-
-### Profit
-
-Now, if we run `goplicate run` from one of our defined projects, we'll see that `rev` was changed from `v1.2.4` to `v1.3.0`!
+Goplicate is licensed under the [MIT](https://choosealicense.com/licenses/mit/) license. For more information, please see the [LICENSE](LICENSE) file.
