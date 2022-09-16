@@ -8,18 +8,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	debug bool
-)
-
-var rootCmd = &cobra.Command{
-	Use:              "goplicate",
-	Short:            "Sync code or configuration snippets from a source repository to multiple target projects",
-	SilenceUsage:     true,
-	PersistentPreRun: toggleDebug,
-}
-
-func Execute() {
+func Execute(version string) {
+	rootCmd := newRootCmd(version)
 	ctx := context.Background()
 
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
@@ -27,16 +17,33 @@ func Execute() {
 	}
 }
 
-func init() {
-	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "verbose logging")
-}
+func newRootCmd(version string) *cobra.Command {
+	var (
+		debug bool
+	)
 
-func toggleDebug(cmd *cobra.Command, args []string) {
-	log.SetLevel(log.InfoLevel)
-	log.DecreasePadding() // remove the default padding
+	var rootCmd = &cobra.Command{
+		Use:          "goplicate",
+		Short:        "Sync project configuration snippets from a source repository to multiple target projects",
+		SilenceUsage: true,
+		Version:      version,
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			log.SetLevel(log.InfoLevel)
+			log.DecreasePadding() // remove the default padding
 
-	if debug {
-		log.Info("Debug logs enabled")
-		log.SetLevel(log.DebugLevel)
+			if debug {
+				log.Info("Debug logs enabled")
+				log.SetLevel(log.DebugLevel)
+			}
+		},
 	}
+
+	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "verbose logging")
+
+	rootCmd.AddCommand(
+		newRunCmd(),
+		newSyncCmd(),
+	)
+
+	return rootCmd
 }
