@@ -16,7 +16,18 @@ Goplicate achieves that by defining "blocks" around such shared snippets and aut
 
 ## Installation
 
-Run `go install github.com/ilaif/goplicate/cmd/goplicate@latest`
+### MacOS
+
+```sh
+brew install ilaif/tap/goplicate
+brew upgrade ilaif/tap/goplicate
+```
+
+### Install from source
+
+```sh
+go install github.com/ilaif/goplicate/cmd/goplicate@latest
+```
 
 ## Usage
 
@@ -24,7 +35,7 @@ Run `go install github.com/ilaif/goplicate/cmd/goplicate@latest`
 
 ## Design principles
 
-* 🌵 Stay DRY - Write a configuration once, and have it synced across many projects.
+* 🌵 Stay [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself) - Write a configuration once, and have it synced across many projects.
 * 🤤 [Keep It Stupid Simple (KISS)](https://en.wikipedia.org/wiki/KISS_principle) - Treat configuration snippets as simple text, not assuming anything about structure.
 * 🙆🏻‍♀️ Allow flexibility, but not too much - Allow syncing whole files, or parts of them (currently, line-based).
 * 😎 Automate all the things - After an initial configuration, automates the rest.
