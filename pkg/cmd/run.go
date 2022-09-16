@@ -11,47 +11,46 @@ import (
 	"github.com/ilaif/goplicate/pkg/utils"
 )
 
-var runCmd = &cobra.Command{
-	Use:    "run",
-	Short:  "Sync the project in the current directory",
-	Args:   cobra.MaximumNArgs(1),
-	PreRun: toggleDebug,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		ctx := cmd.Context()
+func newRunCmd() *cobra.Command {
+	runCmd := &cobra.Command{
+		Use:   "run",
+		Short: "Sync the project in the current directory",
+		Args:  cobra.MaximumNArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := cmd.Context()
 
-		workDir := lo.Ternary(len(args) > 0, args[0], ".")
-		origWorkdir := utils.MustGetwd()
-		if err := utils.Chdir(workDir); err != nil {
-			return err
-		}
-		defer func() {
-			log.Debugf("Cleanup: Restoring original working directory '%s'", origWorkdir)
-			_ = os.Chdir(origWorkdir)
-		}()
+			workDir := lo.Ternary(len(args) > 0, args[0], ".")
+			origWorkdir := utils.MustGetwd()
+			if err := utils.Chdir(workDir); err != nil {
+				return err
+			}
+			defer func() {
+				log.Debugf("Cleanup: Restoring original working directory '%s'", origWorkdir)
+				_ = os.Chdir(origWorkdir)
+			}()
 
-		config, err := pkg.LoadProjectConfig()
-		if err != nil {
-			return err
-		}
+			config, err := pkg.LoadProjectConfig()
+			if err != nil {
+				return err
+			}
 
-		if err := pkg.Run(ctx, config, pkg.NewRunOpts(
-			runFlagsOpts.dryRun,
-			runFlagsOpts.confirm,
-			runFlagsOpts.publish,
-			runFlagsOpts.allowDirty,
-			runFlagsOpts.force,
-			runFlagsOpts.stashChanges,
-			runFlagsOpts.baseBranch,
-		)); err != nil {
-			return err
-		}
+			if err := pkg.Run(ctx, config, pkg.NewRunOpts(
+				runFlagsOpts.dryRun,
+				runFlagsOpts.confirm,
+				runFlagsOpts.publish,
+				runFlagsOpts.allowDirty,
+				runFlagsOpts.force,
+				runFlagsOpts.stashChanges,
+				runFlagsOpts.baseBranch,
+			)); err != nil {
+				return err
+			}
 
-		return nil
-	},
-}
-
-func init() {
-	rootCmd.AddCommand(runCmd)
+			return nil
+		},
+	}
 
 	applyRunFlags(runCmd)
+
+	return runCmd
 }
