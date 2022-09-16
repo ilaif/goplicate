@@ -2,10 +2,10 @@ package pkg
 
 import (
 	"context"
-	"fmt"
 	"os/exec"
 	"strings"
 
+	"github.com/caarlos0/log"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
 
@@ -14,35 +14,52 @@ import (
 )
 
 type RunOpts struct {
-	DryRun     bool
-	Confirm    bool
-	Publish    bool
-	AllowDirty bool
-	Force      bool
-	BaseBranch string
+	DryRun       bool
+	Confirm      bool
+	Publish      bool
+	AllowDirty   bool
+	Force        bool
+	StashChanges bool
+	BaseBranch   string
 }
 
-func NewRunOpts(dryRun, confirm, publish, allowDirty, force bool, baseBranch string) *RunOpts {
+func NewRunOpts(dryRun, confirm, publish, allowDirty, force, stashChanges bool, baseBranch string) *RunOpts {
 	return &RunOpts{
-		DryRun:     dryRun,
-		Confirm:    confirm,
-		Publish:    publish,
-		AllowDirty: allowDirty,
-		BaseBranch: baseBranch,
-		Force:      force,
+		DryRun:       dryRun,
+		Confirm:      confirm,
+		Publish:      publish,
+		AllowDirty:   allowDirty,
+		Force:        force,
+		StashChanges: stashChanges,
+		BaseBranch:   baseBranch,
 	}
 }
 
 func Run(ctx context.Context, config *ProjectConfig, runOpts *RunOpts) error {
-	publisher := git.NewPublisher(runOpts.BaseBranch)
+	publisher := git.NewPublisher(runOpts.BaseBranch, ".")
 
 	if !runOpts.DryRun && runOpts.Publish {
-		if err := publisher.Init(ctx, "."); err != nil {
+		if err := publisher.Init(ctx); err != nil {
 			return errors.Wrap(err, "Failed to initialize git")
 		}
 
-		if !runOpts.AllowDirty && !publisher.IsClean() {
-			return errors.New("Git worktree is not clean. Please commit or stash changes before running again")
+		if !publisher.IsClean() {
+			if runOpts.StashChanges {
+				restoreStashedChanges, err := publisher.StashChanges(ctx)
+				if err != nil {
+					return errors.Wrap(err, "Failed to stash changes")
+				}
+
+				defer func() {
+					if err := restoreStashedChanges(); err != nil {
+						log.IncreasePadding()
+						log.WithError(err).Warn("Cleanup: Failed to restore stashed changes")
+						log.DecreasePadding()
+					}
+				}()
+			} else if !runOpts.AllowDirty {
+				return errors.New("Git worktree is not clean. Please commit or stash changes before running again")
+			}
 		}
 	}
 
@@ -61,22 +78,8 @@ func Run(ctx context.Context, config *ProjectConfig, runOpts *RunOpts) error {
 
 	if !runOpts.DryRun {
 		for _, hook := range config.Hooks.Post {
-			fmt.Printf("Running post hook '%s'\n", hook)
-
-			cmdParts := strings.Split(hook, " ")
-			args := []string{}
-			if len(cmdParts) > 0 {
-				args = append(args, cmdParts[1:]...)
-			}
-
-			outBytes, err := exec.CommandContext(ctx, cmdParts[0], args...).CombinedOutput() // nolint:gosec
-			out := string(outBytes)
-			if err != nil {
-				return errors.Wrapf(err, "Failed to run post hook '%s': %s", hook, out)
-			}
-
-			if out != "" {
-				fmt.Printf("Output: %s\n", out)
+			if err := runHook(ctx, hook); err != nil {
+				return err
 			}
 		}
 	}
@@ -128,15 +131,14 @@ func runTarget(target Target, runOpts *RunOpts) (bool, error) {
 
 		sourceBlock := sourceBlocks.Get(targetBlock.Name)
 		if sourceBlock == nil {
-			fmt.Printf("WARNING: Target '%s': Block '%s' not found. Skipping\n", target.Path, targetBlock.Name)
+			log.Warnf("Target '%s': Block '%s' not found. Skipping", target.Path, targetBlock.Name)
 
 			continue
 		}
 
 		diff := targetBlock.Compare(sourceBlock.Lines)
 		if diff != "" {
-			fmt.Printf("Target '%s': Block '%s' needs to be updated. Diff:\n\n", target.Path, targetBlock.Name)
-			fmt.Printf("%s\n\n", diff)
+			log.Infof("Target '%s': Block '%s' needs to be updated. Diff:\n%s\n", target.Path, targetBlock.Name, diff)
 
 			targetBlock.SetLines(sourceBlock.Lines)
 			anyDiff = true
@@ -148,7 +150,7 @@ func runTarget(target Target, runOpts *RunOpts) (bool, error) {
 	}
 
 	if runOpts.DryRun {
-		fmt.Printf("Target '%s': In dry-run mode - Not performing any changes\n", target.Path)
+		log.Infof("Target '%s': In dry-run mode - Not performing any changes", target.Path)
 
 		return false, nil
 	}
@@ -161,7 +163,31 @@ func runTarget(target Target, runOpts *RunOpts) (bool, error) {
 		return false, err
 	}
 
-	fmt.Printf("Target '%s': Updated\n", target.Path)
+	log.Infof("Target '%s': Updated", target.Path)
 
 	return true, nil
+}
+
+func runHook(ctx context.Context, hook string) error {
+	log.Infof("Running post hook '%s'", hook)
+	log.IncreasePadding()
+	defer log.DecreasePadding()
+
+	cmdParts := strings.Split(hook, " ")
+	args := []string{}
+	if len(cmdParts) > 0 {
+		args = append(args, cmdParts[1:]...)
+	}
+
+	outBytes, err := exec.CommandContext(ctx, cmdParts[0], args...).CombinedOutput() // nolint:gosec
+	out := string(outBytes)
+	if err != nil {
+		return errors.Wrapf(err, "Failed to run post hook '%s': %s", hook, out)
+	}
+
+	if out != "" {
+		log.Infof("Output: %s", out)
+	}
+
+	return nil
 }
