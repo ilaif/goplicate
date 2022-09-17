@@ -9,7 +9,7 @@ import (
 )
 
 func Execute(version string) {
-	rootCmd := newRootCmd(version)
+	rootCmd := NewRootCmd(version)
 	ctx := context.Background()
 
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
@@ -17,7 +17,7 @@ func Execute(version string) {
 	}
 }
 
-func newRootCmd(version string) *cobra.Command {
+func NewRootCmd(version string) *cobra.Command {
 	var (
 		debug bool
 	)
@@ -41,8 +41,8 @@ func newRootCmd(version string) *cobra.Command {
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "verbose logging")
 
 	rootCmd.AddCommand(
-		newRunCmd(),
-		newSyncCmd(),
+		NewRunCmd(),
+		NewSyncCmd(),
 	)
 
 	return rootCmd

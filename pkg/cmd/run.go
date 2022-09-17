@@ -1,17 +1,13 @@
 package cmd
 
 import (
-	"os"
-
-	"github.com/caarlos0/log"
-	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 
 	"github.com/ilaif/goplicate/pkg"
 	"github.com/ilaif/goplicate/pkg/utils"
 )
 
-func newRunCmd() *cobra.Command {
+func NewRunCmd() *cobra.Command {
 	runCmd := &cobra.Command{
 		Use:   "run",
 		Short: "Sync the project in the current directory",
@@ -19,15 +15,11 @@ func newRunCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 
-			workDir := lo.Ternary(len(args) > 0, args[0], ".")
-			origWorkdir := utils.MustGetwd()
-			if err := utils.Chdir(workDir); err != nil {
+			_, chToOrigWorkdir, err := utils.ChWorkdir(args)
+			if err != nil {
 				return err
 			}
-			defer func() {
-				log.Debugf("Cleanup: Restoring original working directory '%s'", origWorkdir)
-				_ = os.Chdir(origWorkdir)
-			}()
+			defer chToOrigWorkdir()
 
 			config, err := pkg.LoadProjectConfig()
 			if err != nil {
