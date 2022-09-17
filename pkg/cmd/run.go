@@ -4,9 +4,10 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ilaif/goplicate/pkg"
+	"github.com/ilaif/goplicate/pkg/utils"
 )
 
-func newRunCmd() *cobra.Command {
+func NewRunCmd() *cobra.Command {
 	runCmd := &cobra.Command{
 		Use:   "run",
 		Short: "Sync the project in the current directory",
@@ -14,7 +15,7 @@ func newRunCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 
-			_, chToOrigWorkdir, err := chWorkdir(args)
+			_, chToOrigWorkdir, err := utils.ChWorkdir(args)
 			if err != nil {
 				return err
 			}

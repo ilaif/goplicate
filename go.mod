@@ -6,6 +6,7 @@ require (
 	github.com/AlecAivazis/survey/v2 v2.3.5
 	github.com/caarlos0/log v0.1.6
 	github.com/go-git/go-git/v5 v5.4.2
+	github.com/otiai10/copy v1.7.0
 	github.com/pkg/errors v0.9.1
 	github.com/samber/lo v1.27.0
 	github.com/sergi/go-diff v1.1.0

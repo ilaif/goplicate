@@ -2,7 +2,6 @@ package utils
 
 import (
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -16,7 +15,7 @@ func ReadFile(filename string) ([]byte, error) {
 		return nil, errors.Wrapf(err, "Failed to get absolute path for file '%s'", filename)
 	}
 
-	buf, err := ioutil.ReadFile(filename)
+	buf, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to read file '%s'", filename)
 	}

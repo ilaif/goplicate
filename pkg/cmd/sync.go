@@ -9,7 +9,7 @@ import (
 	"github.com/ilaif/goplicate/pkg/utils"
 )
 
-func newSyncCmd() *cobra.Command {
+func NewSyncCmd() *cobra.Command {
 	syncCmd := &cobra.Command{
 		Use:   "sync",
 		Short: "Sync multiple projects via a configuration file",
@@ -17,7 +17,7 @@ func newSyncCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 
-			_, chToOrigWorkdir, err := chWorkdir(args)
+			_, chToOrigWorkdir, err := utils.ChWorkdir(args)
 			if err != nil {
 				return err
 			}
