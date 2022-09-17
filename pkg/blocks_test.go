@@ -4,10 +4,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/ilaif/goplicate/pkg/utils"
 )
 
-func TestParseBlocks(t *testing.T) {
-	assert := assert.New(t)
+func TestParseBlocksFromFile(t *testing.T) {
+	a := assert.New(t)
 
 	tests := []struct {
 		file           string
@@ -75,9 +77,82 @@ func TestParseBlocks(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.file, func(t *testing.T) {
 			blocks, err := parseBlocksFromFile(test.file, nil)
-			assert.NoError(err)
+			a.NoError(err)
 
-			assert.Equal(test.expectedBlocks, blocks)
+			a.Equal(test.expectedBlocks, blocks)
 		})
+	}
+}
+
+func TestBlocksPadding(t *testing.T) {
+	a := assert.New(t)
+
+	tests := []struct {
+		targetBlock Block
+		sourceBlock Block
+	}{
+		{
+			targetBlock: Block{
+				Name: "common",
+				Lines: []string{
+					"  # goplicate-start:common",
+					"  value",
+					"  # goplicate-end:common",
+				},
+			},
+			sourceBlock: Block{
+				Name: "common",
+				Lines: []string{
+					"    # goplicate-start:common",
+					"    value",
+					"    # goplicate-end:common",
+				},
+			},
+		},
+		{
+			targetBlock: Block{
+				Name: "common",
+				Lines: []string{
+					"    # goplicate-start:common",
+					"    value",
+					"    # goplicate-end:common",
+				},
+			},
+			sourceBlock: Block{
+				Name: "common",
+				Lines: []string{
+					"  # goplicate-start:common",
+					"  value",
+					"  # goplicate-end:common",
+				},
+			},
+		},
+		{
+			targetBlock: Block{
+				Name: "common",
+				Lines: []string{
+					"  # goplicate-start:common",
+					"  value",
+					"  # goplicate-end:common",
+				},
+			},
+			sourceBlock: Block{
+				Name: "common",
+				Lines: []string{
+					"  # goplicate-start:common",
+					"  value",
+					"  # goplicate-end:common",
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		lines := test.targetBlock.padLines(test.sourceBlock.Lines)
+		expectedLinePadding := utils.CountLeadingSpaces(test.targetBlock.Lines[0])
+		for _, line := range lines {
+			actualLinePadding := utils.CountLeadingSpaces(line)
+			a.Equal(expectedLinePadding, actualLinePadding)
+		}
 	}
 }

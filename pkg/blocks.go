@@ -50,13 +50,23 @@ func (b *Block) SetLines(lines []string) {
 
 // padLines add a base indentation to match the one in this block (according to the first line)
 func (b *Block) padLines(lines []string) []string {
-	paddedLines := make([]string, len(lines))
-	indent := 0
+	ourIndent := 0
 	if len(b.Lines) > 0 {
-		indent = utils.CountLeadingSpaces(b.Lines[0])
+		ourIndent = utils.CountLeadingSpaces(b.Lines[0])
 	}
+	theirIndent := 0
+	if len(lines) > 0 {
+		theirIndent = utils.CountLeadingSpaces(lines[0])
+	}
+	indentAddition := ourIndent - theirIndent
+
+	paddedLines := make([]string, len(lines))
 	for i, l := range lines {
-		paddedLines[i] = strings.Repeat(" ", indent) + l
+		if indentAddition > 0 {
+			paddedLines[i] = strings.Repeat(" ", indentAddition) + l
+		} else {
+			paddedLines[i] = l[-indentAddition:]
+		}
 	}
 
 	return paddedLines
