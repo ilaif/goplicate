@@ -49,32 +49,27 @@ go install github.com/ilaif/goplicate/cmd/goplicate@latest
 * Automatically run post hooks to validate that the updates worked well before opening a pull request.
 * Open a GitHub Pull Request (assuming [GitHub CLI](https://cli.github.com/) is installed and configured).
 
-## Example
+## Quick start example
 
-Let's say that we have a common configuration that we need to maintain for multiple projects. In this example, we'll use an `.eslintrc.js`:
+In the following simplified example, we'll sync an [eslint](https://eslint.org) configuration.
 
-1️⃣ Choose a config file that some of its contents are copied across multiple projects:
+We'll end up having the following folder structure:
 
-`.eslintrc.js`:
-
-```txt
-module.exports = {
-    "extends": "eslint:recommended",
-    "rules": {
-        // enable additional rules
-        "indent": ["error", 4],
-        "linebreak-style": ["error", "unix"],
-        "quotes": ["error", "double"],
-        "semi": ["error", "always"],
-
-        // override configuration set by extending "eslint:recommended"
-        "no-empty": "warn",
-        "no-cond-assign": ["error", "always"],
-    }
-}
+```diff
++ shared-configs-repo/
++   .eslintrc.js.tpl
+  repo-1/
+    .eslintrc.js
++   .goplicate.yaml
+  repo-2/
+    .eslintrc.js
++   .goplicate.yaml
+  ...
 ```
 
-2️⃣ Add goplicate block comments for the `common-rules` synced snippet:
+1️⃣ Choose a config file that some of its contents are copied across multiple projects, and add goplicate block comments for the `common-rules` section of your desire:
+
+`repo-1/.eslintrc.js`:
 
 ```diff
 module.exports = {
@@ -95,27 +90,37 @@ module.exports = {
 }
 ```
 
-3️⃣ Create a separate, centralized repository to manage all of the shared config files. We'll name it `goplicate` and add a base `.eslintrc.js.tpl` file with the `common-rules` snippet that we want to sync:
+2️⃣ Create a separate, centralized repository to manage all of the shared config files. We'll name it `shared-configs-repo`. Then, add an `.eslintrc.js.tpl` file with the `common-rules` snippet that we want to sync:
 
-```js
-// goplicate-start:common-rules
-// enable additional rules
-"indent": ["error", 4],
-"linebreak-style": ["error", "unix"],
-"quotes": ["error", "double"],
-"semi": ["error", "always"],
-// goplicate-end:common-rules
+`shared-configs-repo/.eslint.js.tpl`:
+
+```txt
+module.exports = {
+     "rules": {
+          // goplicate-start:common-rules
+          // enable additional rules
+          "indent": ["error", 4],
+          "linebreak-style": ["error", "unix"],
+          "quotes": ["error", "double"],
+          "semi": ["error", "always"],
+          // goplicate-end:common-rules
+    }
+}
 ```
 
-4️⃣ Go back to the original project, and create a `.goplicate.yaml` file in your project root folder:
+> Goplicate snippets are simply the sections of the config file that we'd like to sync. In this example, we've also added the surrounding configuration to make it more readable, but it's not really needed.
+
+3️⃣ Go back to the original project, and create a `.goplicate.yaml` file in your project root folder:
+
+`repo-1/.goplicate.yaml`:
 
 ```yaml
 targets:
   - path: .eslintrc.js
-    source: ../goplicate/.eslintrc.js.tpl
+    source: ../shared-configs-repo/.eslintrc.js.tpl
 ```
 
-5️⃣ Finally, run goplicate on the repository to sync any updates:
+4️⃣ Finally, run goplicate on the repository to sync any updates:
 
 <img src="https://github.com/ilaif/goplicate/raw/main/assets/goplicate-run.gif" width="700">
 
