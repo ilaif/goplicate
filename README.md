@@ -124,6 +124,14 @@ targets:
 
 <img src="https://github.com/ilaif/goplicate/raw/main/assets/goplicate-run.gif" width="700">
 
+## More examples
+
+See the [Examples](https://github.com/ilaif/goplicate/tree/main/examples) folder for usage examples.
+
+## Questions, bug reporting and feature requests
+
+You're more than welcome to [Create a new issue](https://github.com/ilaif/goplicate/issues/new) or contribute.
+
 ## Contributing
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change. See [CONTRIBUTING.md](CONTRIBUTING.md) for more information.

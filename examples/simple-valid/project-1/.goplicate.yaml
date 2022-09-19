@@ -1,0 +1,8 @@
+# A .goplicate.yaml configuration file that tells goplicate
+# which "target" files to sync, where to take the "source"
+# configurations from, and how to fill parameter values.
+
+targets:
+  - path: .eslintrc.js
+    source: ../goplicate-shared/.eslintrc.js
+    params: [../goplicate-shared/params.yaml]

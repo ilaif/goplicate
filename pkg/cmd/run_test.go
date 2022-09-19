@@ -11,7 +11,7 @@ import (
 func TestRunCmd(t *testing.T) {
 	r := require.New(t)
 
-	defer testutils.PrepareWorkdir(t, "testdata/simple-valid")()
+	defer testutils.PrepareWorkdir(t, "../../examples/simple-valid", "project-1")()
 
 	testutils.RequireFileContains(r, ".eslintrc.js", "indent: ['error', 4]")
 

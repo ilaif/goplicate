@@ -1,0 +1,5 @@
+# .goplicate-projects.yaml is used by the "goplicate sync"
+# command to run on multiple projects with a single command.
+
+projects:
+  - path: "../simple-valid/project-1"

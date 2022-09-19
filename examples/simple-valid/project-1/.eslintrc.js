@@ -1,3 +1,7 @@
+// A sample .eslintrc.js "target" configuration,
+// where only the sections that are surrounded by
+// goplicate-start/end comments are synced from the shared configuration.
+
 module.exports = {
   extends: 'eslint:recommended',
   rules: {
