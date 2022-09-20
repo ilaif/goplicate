@@ -1,3 +1,0 @@
-targets:
-  - path: .eslintrc.js
-    source: eslintrc.js

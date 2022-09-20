@@ -2,13 +2,14 @@ package testutils
 
 import (
 	"os"
+	"path"
 	"testing"
 
 	cp "github.com/otiai10/copy"
 	"github.com/stretchr/testify/require"
 )
 
-func PrepareWorkdir(t *testing.T, source string) func() {
+func PrepareWorkdir(t *testing.T, source string, cd string) func() {
 	r := require.New(t)
 
 	dir, err := os.MkdirTemp(os.TempDir(), "_goplicate_"+t.Name())
@@ -16,7 +17,7 @@ func PrepareWorkdir(t *testing.T, source string) func() {
 	r.NoError(cp.Copy(source, dir))
 	origWd, err := os.Getwd()
 	r.NoError(err)
-	r.NoError(os.Chdir(dir))
+	r.NoError(os.Chdir(path.Join(dir, cd)))
 
 	return func() {
 		os.RemoveAll(dir)
