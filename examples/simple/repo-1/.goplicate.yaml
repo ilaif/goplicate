@@ -4,5 +4,5 @@
 
 targets:
   - path: .eslintrc.js
-    source: ../goplicate-shared/.eslintrc.js
-    params: [../goplicate-shared/params.yaml]
+    source: ../shared-configs-repo/.eslintrc.js
+    params: [../shared-configs-repo/params.yaml]

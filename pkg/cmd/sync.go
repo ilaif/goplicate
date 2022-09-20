@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"path"
+
 	"github.com/caarlos0/log"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -28,11 +30,15 @@ func NewSyncCmd() *cobra.Command {
 				return err
 			}
 
+			workdir := utils.MustGetwd()
+
 			for _, project := range config.Projects {
-				log.Infof("Syncing project %s...", project.Path)
+				projectAbsPath := path.Join(workdir, project.Path)
+
+				log.Infof("Syncing project %s...", projectAbsPath)
 				log.IncreasePadding()
 
-				if err := utils.Chdir(project.Path); err != nil {
+				if err := utils.Chdir(projectAbsPath); err != nil {
 					return err
 				}
 
@@ -50,11 +56,11 @@ func NewSyncCmd() *cobra.Command {
 					runFlagsOpts.stashChanges,
 					runFlagsOpts.baseBranch,
 				)); err != nil {
-					return errors.Wrapf(err, "Failed to sync project '%s'", project.Path)
+					return errors.Wrapf(err, "Failed to sync project '%s'", projectAbsPath)
 				}
 
 				log.DecreasePadding()
-				log.Infof("Syncing project %s done", project.Path)
+				log.Infof("Syncing project %s done", projectAbsPath)
 			}
 
 			log.Infof("Syncing complete")
