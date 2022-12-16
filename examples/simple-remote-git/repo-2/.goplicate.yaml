@@ -7,8 +7,8 @@ targets:
     source:
       repository: https://github.com/ilaif/goplicate
       branch: chore/support-remote-git-sources
-      path: ../shared-configs-repo/.eslintrc.js
+      path: examples/simple-remote-git/shared-configs-repo/.eslintrc.js
     params:
       - repository: https://github.com/ilaif/goplicate
         branch: chore/support-remote-git-sources
-        path: ../shared-configs-repo/params.yaml
+        path: examples/simple-remote-git/shared-configs-repo/params.yaml
