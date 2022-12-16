@@ -1,0 +1,4 @@
+# A params file that can be used for keeping the
+# configuration even DRY-er.
+
+indent: 2

@@ -2,5 +2,7 @@
 # command to run on multiple projects with a single command.
 
 projects:
-  - path: "../simple/repo-1"
-  - path: "../simple/repo-2"
+  - location:
+      path: ../simple/repo-1
+  - location:
+      path: ../simple/repo-2

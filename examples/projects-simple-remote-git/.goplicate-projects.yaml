@@ -1,0 +1,12 @@
+# .goplicate-projects.yaml is used by the "goplicate sync"
+# command to run on multiple projects with a single command.
+
+projects:
+  - location:
+      repository: https://github.com/ilaif/goplicate
+      branch: chore/support-remote-git-sources
+      path: examples/simple/repo-1
+  - location:
+      repository: https://github.com/ilaif/goplicate
+      branch: chore/support-remote-git-sources
+      path: examples/simple/repo-2

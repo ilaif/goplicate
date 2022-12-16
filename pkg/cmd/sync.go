@@ -1,13 +1,12 @@
 package cmd
 
 import (
-	"path"
-
 	"github.com/caarlos0/log"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/ilaif/goplicate/pkg"
+	"github.com/ilaif/goplicate/pkg/git"
 	"github.com/ilaif/goplicate/pkg/utils"
 )
 
@@ -17,6 +16,7 @@ func NewSyncCmd() *cobra.Command {
 		Short: "Sync multiple projects via a configuration file",
 		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			log.Debug("Executing sync command")
 			ctx := cmd.Context()
 
 			_, chToOrigWorkdir, err := utils.ChWorkdir(args)
@@ -31,9 +31,13 @@ func NewSyncCmd() *cobra.Command {
 			}
 
 			workdir := utils.MustGetwd()
+			cloner := git.NewCloner()
 
 			for _, project := range config.Projects {
-				projectAbsPath := path.Join(workdir, project.Path)
+				projectAbsPath, err := pkg.ResolveSourcePath(ctx, project.Location, workdir, cloner)
+				if err != nil {
+					return errors.Wrap(err, "Failed to resolve source")
+				}
 
 				log.Infof("Syncing project %s...", projectAbsPath)
 				log.IncreasePadding()
@@ -47,7 +51,7 @@ func NewSyncCmd() *cobra.Command {
 					return err
 				}
 
-				if err := pkg.Run(ctx, projectConfig, pkg.NewRunOpts(
+				if err := pkg.Run(ctx, projectConfig, cloner, pkg.NewRunOpts(
 					runFlagsOpts.dryRun,
 					runFlagsOpts.confirm,
 					runFlagsOpts.publish,

@@ -4,5 +4,7 @@
 
 targets:
   - path: .eslintrc.js
-    source: ../shared-configs-repo/.eslintrc.js
-    params: [../shared-configs-repo/params.yaml]
+    source:
+      path: ../shared-configs-repo/.eslintrc.js
+    params:
+      - path: ../shared-configs-repo/params.yaml

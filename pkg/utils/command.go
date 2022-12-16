@@ -3,7 +3,9 @@ package utils
 import (
 	"context"
 	"os/exec"
+	"strings"
 
+	"github.com/caarlos0/log"
 	"github.com/pkg/errors"
 )
 
@@ -19,9 +21,11 @@ func (c *CommandRunner) Run(ctx context.Context, name string, args ...string) (s
 	cmd := exec.CommandContext(ctx, name, args...)
 	cmd.Dir = c.Dir
 
+	log.Debugf("Running command '%s %s' in directory '%s'", name, strings.Join(args, " "), c.Dir)
+
 	bytes, err := cmd.CombinedOutput()
 	if err != nil {
-		return "", errors.Wrap(err, "Failed to run command")
+		return string(bytes), errors.Wrap(err, "Failed to run command")
 	}
 
 	return string(bytes), err
