@@ -32,6 +32,7 @@ func NewSyncCmd() *cobra.Command {
 
 			workdir := utils.MustGetwd()
 			cloner := git.NewCloner()
+			defer cloner.Close()
 
 			for _, project := range config.Projects {
 				projectAbsPath, err := pkg.ResolveSourcePath(ctx, project.Location, workdir, cloner)

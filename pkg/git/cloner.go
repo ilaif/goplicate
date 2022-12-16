@@ -48,7 +48,7 @@ func (c *Cloner) Clone(ctx context.Context, uri string, branch string) (string, 
 		args = append(args, "--branch", branch)
 	}
 
-	log.Infof("Cloning '%s'...", uri)
+	log.Infof("Cloning '%s'", uri)
 
 	if output, err := cmdRunner.Run(ctx, "git", args...); err != nil {
 		return "", errors.Wrapf(err, "Failed to clone repository '%s': %s", uri, output)
@@ -57,4 +57,11 @@ func (c *Cloner) Clone(ctx context.Context, uri string, branch string) (string, 
 	c.repositories[uri] = tempdir
 
 	return tempdir, nil
+}
+
+func (c *Cloner) Close() {
+	for uri, tempdir := range c.repositories {
+		_ = os.RemoveAll(tempdir)
+		delete(c.repositories, uri)
+	}
 }

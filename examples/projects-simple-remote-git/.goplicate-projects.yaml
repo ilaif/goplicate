@@ -5,8 +5,8 @@ projects:
   - location:
       repository: https://github.com/ilaif/goplicate
       branch: chore/support-remote-git-sources
-      path: examples/simple/repo-1
+      path: examples/simple-remote-git/repo-1
   - location:
       repository: https://github.com/ilaif/goplicate
       branch: chore/support-remote-git-sources
-      path: examples/simple/repo-2
+      path: examples/simple-remote-git/repo-2

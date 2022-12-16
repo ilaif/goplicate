@@ -26,20 +26,23 @@ func TestSyncCmd_Simple(t *testing.T) {
 	testutils.RequireFileContains(r, "../simple/repo-2/.eslintrc.js", "indent: ['error', 2]")
 }
 
-// TODO(ilaif): finish the test
-// func TestSyncCmd_RemoteGit(t *testing.T) {
-// 	r := require.New(t)
+func TestSyncCmd_RemoteGit(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping test in short mode")
+	}
 
-// 	defer testutils.PrepareWorkdir(t, "../../examples", "projects-simple-remote-git")()
+	r := require.New(t)
 
-// 	testutils.RequireFileContains(r, "../simple/repo-1/.eslintrc.js", "indent: ['error', 4]")
-// 	testutils.RequireFileContains(r, "../simple/repo-2/.eslintrc.js", "indent: ['error', 4]")
+	defer testutils.PrepareWorkdir(t, "../../examples", "projects-simple-remote-git")()
 
-// 	syncCmd := cmd.NewSyncCmd()
-// 	syncCmd.SetArgs([]string{"--confirm"})
+	testutils.RequireFileContains(r, "../simple-remote-git/repo-1/.eslintrc.js", "indent: ['error', 4]")
+	testutils.RequireFileContains(r, "../simple-remote-git/repo-2/.eslintrc.js", "indent: ['error', 4]")
 
-// 	r.NoError(syncCmd.Execute())
+	syncCmd := cmd.NewSyncCmd()
+	syncCmd.SetArgs([]string{"--confirm"})
 
-// 	testutils.RequireFileContains(r, "../simple/repo-1/.eslintrc.js", "indent: ['error', 2]")
-// 	testutils.RequireFileContains(r, "../simple/repo-2/.eslintrc.js", "indent: ['error', 2]")
-// }
+	r.NoError(syncCmd.Execute())
+
+	testutils.RequireFileContains(r, "../simple-remote-git/repo-1/.eslintrc.js", "indent: ['error', 2]")
+	testutils.RequireFileContains(r, "../simple-remote-git/repo-2/.eslintrc.js", "indent: ['error', 2]")
+}
