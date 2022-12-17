@@ -47,9 +47,11 @@ go install github.com/ilaif/goplicate/cmd/goplicate@latest
 * Template support using [Go Templates](https://pkg.go.dev/text/template) with dynamic parameters or conditions.
 * Sync multiple repositories with a single command.
 * Automatically run post hooks to validate that the updates worked well before opening a pull request.
-* Open a GitHub Pull Request (assuming [GitHub CLI](https://cli.github.com/) is installed and configured).
+* Open a GitHub Pull Request (requires [GitHub CLI](https://cli.github.com/) to be installed and configured).
 
-## Quick start example
+## Examples
+
+### Quick start
 
 In the following simplified example, we'll sync an [eslint](https://eslint.org) configuration.
 
@@ -117,14 +119,120 @@ module.exports = {
 ```yaml
 targets:
   - path: .eslintrc.js
-    source: ../shared-configs-repo/.eslintrc.js.tpl
+    source:
+      path: ../shared-configs-repo/.eslintrc.js.tpl
 ```
 
 4️⃣ Finally, run goplicate on the repository to sync any updates:
 
 <img src="https://github.com/ilaif/goplicate/raw/main/assets/goplicate-run.gif" width="700">
 
-## More examples
+### Using a remote git repository
+
+In this example, we'll use a remote git repository as the source of the shared snippets instead of a local folder.
+
+1️⃣ Fork [goplicate-example-repo-1](https://github.com/ilaif/goplicate-example-repo-1) and clone it.
+
+Looking inside, we see 2 files:
+
+`.eslintrc.js`:
+
+```js
+module.exports = {
+  extends: 'eslint:recommended',
+  rules: {
+    // goplicate-start:common-rules
+    // enable additional rules
+    indent: ['error', 4],
+    'linebreak-style': ['error', 'unix'],
+    quotes: ['error', 'double'],
+    semi: ['error', 'always'],
+    // goplicate-end:common-rules
+
+    // override configuration set by extending "eslint:recommended"
+    'no-empty': 'warn',
+    'no-cond-assign': ['error', 'always'],
+  },
+}
+```
+
+> Notice the `// goplicate-start:common-rules` and `// goplicate-end:common-rules` block annotations that will be synced by goplicate.
+
+`.goplicate.yaml`:
+
+```yaml
+targets:
+  - path: .eslintrc.js
+    source:
+      repository: https://github.com/ilaif/goplicate-example-shared-configs
+      path: .eslintrc.js
+    params:
+      - repository: https://github.com/ilaif/goplicate-example-shared-configs
+        path: params.yaml
+```
+
+If we go to [goplicate-example-shared-configs](https://github.com/ilaif/goplicate-example-shared-configs), we'll see that `.eslintrc.js` contains the `common-rules` source of truth with the `params.yaml` containing a parameter as well:
+
+`.eslintrc.js` in [goplicate-example-shared-configs](https://github.com/ilaif/goplicate-example-shared-configs):
+
+```js
+module.exports = {
+  rules: {
+    // goplicate-start:common-rules
+    // enable additional rules
+    indent: ['error', {{.indent}}],
+    'linebreak-style': ['error', 'unix'],
+    quotes: ['error', 'double'],
+    semi: ['error', 'always'],
+    // goplicate-end:common-rules
+  },
+}
+```
+
+`params.yaml` in [goplicate-example-shared-configs](https://github.com/ilaif/goplicate-example-shared-configs):
+
+```yaml
+indent: 2
+```
+
+2️⃣ From the cloned repository, run goplicate to create a new PR with synced changes:
+
+```sh
+~/git/oss/goplicate-example-repo-1 (main ✔) ᐅ goplicate run --publish
+• Cloning 'https://github.com/ilaif/goplicate-example-shared-configs'
+• Target '.eslintrc.js': Block 'common-rules' needs to be updated. Diff:
+     // goplicate-start:common-rules
+     // enable additional rules
+-    indent: ['error', 4],
++    indent: ['error', 2],
+     'linebreak-style': ['error', 'unix'],
+     quotes: ['error', 'double'],
+     semi: ['error', 'always'],
+...
+
+? Do you want to apply the above changes? Yes
+• Target '.eslintrc.js': Updated
+? Do you want to publish the above changes? Yes
+• Publishing changes...
+• Created PR: https://github.com/ilaif/goplicate-example-repo-1/pull/4
+```
+
+3️⃣ Open the PR and review it! We'll see that the indentation indeed changed:
+
+```diff
+  rules: {
+    // goplicate-start:common-rules
+    // enable additional rules
+-   indent: ['error', 4],
++   indent: ['error', 2],
+    'linebreak-style': ['error', 'unix'],
+    quotes: ['error', 'double'],
+    semi: ['error', 'always'],
+```
+
+4️⃣ Finally, merge it and maintain consistency and standardization across your configuration files!
+
+### More examples
 
 See the [Examples](https://github.com/ilaif/goplicate/tree/main/examples) folder for usage examples.
 
