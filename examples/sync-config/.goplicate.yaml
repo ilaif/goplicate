@@ -3,7 +3,12 @@
 # configurations from, and how to fill parameter values.
 
 targets:
+  # goplicate-start:common
   - path: config.yaml
     source:
       path: ./shared/config.yaml
-      sync-initial: true
+  # goplicate-end:common
+sync-config:
+  path: .goplicate.yaml
+  source:
+    path: ./shared/.goplicate.yaml

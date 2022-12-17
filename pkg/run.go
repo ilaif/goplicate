@@ -2,15 +2,11 @@ package pkg
 
 import (
 	"context"
-	"os"
-	"os/exec"
-	"strings"
 
 	"github.com/caarlos0/log"
 	"github.com/pkg/errors"
-	"github.com/pkg/fileutils"
-	"github.com/samber/lo"
 
+	"github.com/ilaif/goplicate/pkg/config"
 	"github.com/ilaif/goplicate/pkg/git"
 	"github.com/ilaif/goplicate/pkg/utils"
 )
@@ -40,7 +36,30 @@ func NewRunOpts(
 	}
 }
 
-func Run(ctx context.Context, config *ProjectConfig, cloner git.Cloner, runOpts *RunOpts) error {
+func Run(ctx context.Context, cloner git.Cloner, runOpts *RunOpts) error {
+	cfg, err := config.LoadProjectConfig()
+	if err != nil {
+		return err
+	}
+
+	updatedTargetPaths := []string{}
+
+	if cfg.SyncConfig != nil {
+		target := *cfg.SyncConfig
+
+		if updated, err := RunTarget(ctx, target, cloner, runOpts.DryRun, runOpts.Confirm); err != nil {
+			return errors.Wrapf(err, "Target '%s'", target.Path)
+		} else if updated {
+			updatedTargetPaths = append(updatedTargetPaths, target.Path)
+		}
+
+		// Reload the config
+		cfg, err = config.LoadProjectConfig()
+		if err != nil {
+			return err
+		}
+	}
+
 	publisher := git.NewPublisher(runOpts.BaseBranch, utils.MustGetwd())
 
 	if !runOpts.DryRun && runOpts.Publish {
@@ -68,9 +87,8 @@ func Run(ctx context.Context, config *ProjectConfig, cloner git.Cloner, runOpts 
 		}
 	}
 
-	updatedTargetPaths := []string{}
-	for _, target := range config.Targets {
-		if updated, err := runTarget(ctx, target, cloner, runOpts); err != nil {
+	for _, target := range cfg.Targets {
+		if updated, err := RunTarget(ctx, target, cloner, runOpts.DryRun, runOpts.Confirm); err != nil {
 			return errors.Wrapf(err, "Target '%s'", target.Path)
 		} else if updated {
 			updatedTargetPaths = append(updatedTargetPaths, target.Path)
@@ -82,8 +100,8 @@ func Run(ctx context.Context, config *ProjectConfig, cloner git.Cloner, runOpts 
 	}
 
 	if !runOpts.DryRun {
-		for _, hook := range config.Hooks.Post {
-			if err := runHook(ctx, hook); err != nil {
+		for _, hook := range cfg.Hooks.Post {
+			if err := RunHook(ctx, hook); err != nil {
 				return err
 			}
 		}
@@ -97,117 +115,6 @@ func Run(ctx context.Context, config *ProjectConfig, cloner git.Cloner, runOpts 
 		if err := publisher.Publish(ctx, updatedTargetPaths, runOpts.Confirm); err != nil {
 			return errors.Wrap(err, "Failed to publish changes")
 		}
-	}
-
-	return nil
-}
-
-func runTarget(ctx context.Context, target Target, cloner git.Cloner, runOpts *RunOpts) (bool, error) {
-	workdir := utils.MustGetwd()
-
-	sourcePath, err := ResolveSourcePath(ctx, target.Source, workdir, cloner)
-	if err != nil {
-		return false, errors.Wrapf(err, "Failed to resolve source '%s'", target.Source.String())
-	}
-
-	if target.SyncInitial {
-		if _, err := os.Stat(target.Path); errors.Is(err, os.ErrNotExist) {
-			log.Infof("Syncing initial state of '%s' from '%s'", target.Path, sourcePath)
-			if err := fileutils.CopyFile(target.Path, sourcePath); err != nil {
-				return false, errors.Wrapf(err, "Failed to copy '%s' to '%s'", sourcePath, target.Path)
-			}
-		}
-	}
-
-	targetBlocks, err := parseBlocksFromFile(target.Path, nil)
-	if err != nil {
-		return false, errors.Wrap(err, "Failed to parse target blocks")
-	}
-
-	params := map[string]interface{}{}
-	for _, paramsSource := range target.Params {
-		paramsPath, err := ResolveSourcePath(ctx, paramsSource, workdir, cloner)
-		if err != nil {
-			return false, errors.Wrapf(err, "Failed to resolve source '%s'", paramsSource.String())
-		}
-
-		var curParams map[string]interface{}
-		if err := utils.ReadYaml(paramsPath, &curParams); err != nil {
-			return false, errors.Wrap(err, "Failed to parse params")
-		}
-		params = lo.Assign(params, curParams)
-	}
-
-	sourceBlocks, err := parseBlocksFromFile(sourcePath, params)
-	if err != nil {
-		return false, errors.Wrap(err, "Failed to parse source blocks")
-	}
-
-	anyDiff := false
-
-	for _, targetBlock := range targetBlocks {
-		if targetBlock.Name == "" {
-			continue
-		}
-
-		sourceBlock := sourceBlocks.Get(targetBlock.Name)
-		if sourceBlock == nil {
-			log.Warnf("Target '%s': Block '%s' not found. Skipping", target.Path, targetBlock.Name)
-
-			continue
-		}
-
-		diff := targetBlock.Compare(sourceBlock.Lines)
-		if diff != "" {
-			log.Infof("Target '%s': Block '%s' needs to be updated. Diff:\n%s\n", target.Path, targetBlock.Name, diff)
-
-			targetBlock.SetLines(sourceBlock.Lines)
-			anyDiff = true
-		}
-	}
-
-	if !anyDiff {
-		return false, nil
-	}
-
-	if runOpts.DryRun {
-		log.Infof("Target '%s': In dry-run mode - Not performing any changes", target.Path)
-
-		return false, nil
-	}
-
-	if !runOpts.Confirm && !utils.AskUserYesNoQuestion("Do you want to apply the above changes?") {
-		return false, errors.New("User aborted")
-	}
-
-	if err := utils.WriteStringToFile(target.Path, targetBlocks.Render()); err != nil {
-		return false, err
-	}
-
-	log.Infof("Target '%s': Updated", target.Path)
-
-	return true, nil
-}
-
-func runHook(ctx context.Context, hook string) error {
-	log.Infof("Running post hook '%s'", hook)
-	log.IncreasePadding()
-	defer log.DecreasePadding()
-
-	cmdParts := strings.Split(hook, " ")
-	args := []string{}
-	if len(cmdParts) > 0 {
-		args = append(args, cmdParts[1:]...)
-	}
-
-	outBytes, err := exec.CommandContext(ctx, cmdParts[0], args...).CombinedOutput() // nolint:gosec
-	out := string(outBytes)
-	if err != nil {
-		return errors.Wrapf(err, "Failed to run post hook '%s': %s", hook, out)
-	}
-
-	if out != "" {
-		log.Infof("Output: %s", out)
 	}
 
 	return nil

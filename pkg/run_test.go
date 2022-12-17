@@ -11,44 +11,16 @@ import (
 	"github.com/ilaif/goplicate/pkg/mocks"
 )
 
-func TestRun_Error_SyncingToNonExistentFile(t *testing.T) {
+func TestRun_Success_SyncConfig(t *testing.T) {
 	r := require.New(t)
 
-	defer testutils.PrepareWorkdir(t, "../examples/sync-initial", ".")()
+	defer testutils.PrepareWorkdir(t, "../examples/sync-config", ".")()
 
-	config := &pkg.ProjectConfig{
-		Targets: []pkg.Target{
-			{
-				Path:        "config.yaml",
-				Source:      pkg.Source{Path: "./shared/config.yaml"},
-				SyncInitial: false,
-			},
-		},
-	}
 	cloner := &mocks.ClonerMock{}
 	opts := pkg.NewRunOpts(false, true, false, false, false, false, "")
 
-	r.ErrorContains(pkg.Run(context.TODO(), config, cloner, opts), "Failed to read file")
-}
+	r.NoError(pkg.Run(context.TODO(), cloner, opts))
 
-func TestRun_Success_SyncingToNonExistentFile_WithSyncInitial(t *testing.T) {
-	r := require.New(t)
-
-	defer testutils.PrepareWorkdir(t, "../examples/sync-initial", ".")()
-
-	config := &pkg.ProjectConfig{
-		Targets: []pkg.Target{
-			{
-				Path:        "config.yaml",
-				Source:      pkg.Source{Path: "./shared/config.yaml"},
-				SyncInitial: true,
-			},
-		},
-	}
-	cloner := &mocks.ClonerMock{}
-	opts := pkg.NewRunOpts(false, true, false, false, false, false, "")
-
-	r.NoError(pkg.Run(context.TODO(), config, cloner, opts))
-
-	testutils.RequireFileContains(r, "config.yaml", "key: value")
+	testutils.RequireFileContains(r, ".goplicate.yaml", "path: new.yaml")
+	testutils.RequireFileContains(r, "new.yaml", "newKey: newValue")
 }

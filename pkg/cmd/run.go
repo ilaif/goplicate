@@ -24,17 +24,12 @@ func NewRunCmd() *cobra.Command {
 			}
 			defer chToOrigWorkdir()
 
-			config, err := pkg.LoadProjectConfig()
-			if err != nil {
-				return err
-			}
-
 			cloner := git.NewCloner()
 			if !runFlagsOpts.disableCleanup {
 				defer cloner.Close()
 			}
 
-			if err := pkg.Run(ctx, config, cloner, pkg.NewRunOpts(
+			if err := pkg.Run(ctx, cloner, pkg.NewRunOpts(
 				runFlagsOpts.dryRun,
 				runFlagsOpts.confirm,
 				runFlagsOpts.publish,

@@ -6,6 +6,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ilaif/goplicate/pkg"
+	"github.com/ilaif/goplicate/pkg/config"
 	"github.com/ilaif/goplicate/pkg/git"
 	"github.com/ilaif/goplicate/pkg/utils"
 )
@@ -25,7 +26,7 @@ func NewSyncCmd() *cobra.Command {
 			}
 			defer chToOrigWorkdir()
 
-			config, err := pkg.LoadProjectsConfig()
+			cfg, err := config.LoadProjectsConfig()
 			if err != nil {
 				return err
 			}
@@ -36,7 +37,7 @@ func NewSyncCmd() *cobra.Command {
 				defer cloner.Close()
 			}
 
-			for _, project := range config.Projects {
+			for _, project := range cfg.Projects {
 				projectAbsPath, err := pkg.ResolveSourcePath(ctx, project.Location, workdir, cloner)
 				if err != nil {
 					return errors.Wrap(err, "Failed to resolve source")
@@ -49,12 +50,7 @@ func NewSyncCmd() *cobra.Command {
 					return err
 				}
 
-				projectConfig, err := pkg.LoadProjectConfig()
-				if err != nil {
-					return err
-				}
-
-				if err := pkg.Run(ctx, projectConfig, cloner, pkg.NewRunOpts(
+				if err := pkg.Run(ctx, cloner, pkg.NewRunOpts(
 					runFlagsOpts.dryRun,
 					runFlagsOpts.confirm,
 					runFlagsOpts.publish,
