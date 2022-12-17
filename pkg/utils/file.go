@@ -31,13 +31,13 @@ func WriteStringToFile(filename string, text string) error {
 	return nil
 }
 
-func ReadYaml(filename string, config interface{}) error {
+func ReadYaml(filename string, cfg interface{}) error {
 	buf, err := ReadFile(filename)
 	if err != nil {
 		return err
 	}
 
-	err = yaml.Unmarshal(buf, config)
+	err = yaml.Unmarshal(buf, cfg)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to parse config from '%s'", filename)
 	}

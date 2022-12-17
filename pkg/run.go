@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/fileutils"
 	"github.com/samber/lo"
 
+	"github.com/ilaif/goplicate/pkg/config"
 	"github.com/ilaif/goplicate/pkg/git"
 	"github.com/ilaif/goplicate/pkg/utils"
 )
@@ -40,7 +41,7 @@ func NewRunOpts(
 	}
 }
 
-func Run(ctx context.Context, config *ProjectConfig, cloner git.Cloner, runOpts *RunOpts) error {
+func Run(ctx context.Context, cfg *config.ProjectConfig, cloner git.Cloner, runOpts *RunOpts) error {
 	publisher := git.NewPublisher(runOpts.BaseBranch, utils.MustGetwd())
 
 	if !runOpts.DryRun && runOpts.Publish {
@@ -69,7 +70,7 @@ func Run(ctx context.Context, config *ProjectConfig, cloner git.Cloner, runOpts 
 	}
 
 	updatedTargetPaths := []string{}
-	for _, target := range config.Targets {
+	for _, target := range cfg.Targets {
 		if updated, err := runTarget(ctx, target, cloner, runOpts); err != nil {
 			return errors.Wrapf(err, "Target '%s'", target.Path)
 		} else if updated {
@@ -82,7 +83,7 @@ func Run(ctx context.Context, config *ProjectConfig, cloner git.Cloner, runOpts 
 	}
 
 	if !runOpts.DryRun {
-		for _, hook := range config.Hooks.Post {
+		for _, hook := range cfg.Hooks.Post {
 			if err := runHook(ctx, hook); err != nil {
 				return err
 			}
@@ -102,7 +103,7 @@ func Run(ctx context.Context, config *ProjectConfig, cloner git.Cloner, runOpts 
 	return nil
 }
 
-func runTarget(ctx context.Context, target Target, cloner git.Cloner, runOpts *RunOpts) (bool, error) {
+func runTarget(ctx context.Context, target config.Target, cloner git.Cloner, runOpts *RunOpts) (bool, error) {
 	workdir := utils.MustGetwd()
 
 	sourcePath, err := ResolveSourcePath(ctx, target.Source, workdir, cloner)
