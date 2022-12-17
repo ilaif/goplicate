@@ -59,7 +59,7 @@ func (p *Project) Validate() error {
 	return nil
 }
 
-// Target defines a `path`` to apply goplicate block snippets on based on the `source`` with the supplied `params`
+// Target defines a `path` to apply goplicate block snippets on based on the `source` with the supplied `params`
 type Target struct {
 	Path   string   `yaml:"path"`
 	Source Source   `yaml:"source"`
