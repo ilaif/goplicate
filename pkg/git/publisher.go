@@ -73,14 +73,15 @@ func (p *Publisher) IsClean() bool {
 	return p.status.IsClean()
 }
 
-func (p *Publisher) Publish(ctx context.Context, filePaths []string) error {
+func (p *Publisher) Publish(ctx context.Context, filePaths []string, confirm bool) error {
 	log.Info("Publishing changes...")
 
-	log.Debug("Fetching HEAD reference")
-	origHeadRef, err := p.repo.Head()
+	log.Debug("Fetching current branch name")
+	origBranchName, err := p.cmdRunner.Run(ctx, "git", "rev-parse", "--abbrev-ref", "HEAD")
 	if err != nil {
-		return errors.Wrap(err, "Failed to get HEAD reference")
+		return errors.Wrapf(err, "Failed to fetch current branch name: %s", origBranchName)
 	}
+	origBranchName = strings.Trim(origBranchName, "\n")
 
 	if p.baseBranch != "" {
 		log.Debugf("Checking out base branch '%s'", p.baseBranch)
@@ -89,8 +90,8 @@ func (p *Publisher) Publish(ctx context.Context, filePaths []string) error {
 		}
 	}
 	defer func() {
-		log.Debugf("Cleanup: Checking out original branch '%s'", origHeadRef.Name())
-		if output, err := p.cmdRunner.Run(ctx, "git", "checkout", string(origHeadRef.Name())); err != nil {
+		log.Debugf("Cleanup: Checking out original branch '%s'", origBranchName)
+		if output, err := p.cmdRunner.Run(ctx, "git", "checkout", string(origBranchName)); err != nil {
 			log.WithError(err).Errorf("Cleanup: Failed to checkout back to original branch '%s': %s", p.baseBranch, output)
 		}
 	}()
@@ -106,6 +107,30 @@ func (p *Publisher) Publish(ctx context.Context, filePaths []string) error {
 	log.Debugf("Deleting existing branch '%s' if exists", branchName)
 	if output, err := p.cmdRunner.Run(ctx, "git", "branch", "-D", branchName); err != nil {
 		log.WithError(err).Debugf("Failed to delete existing branch '%s': %s", branchName, output)
+	}
+
+	remoteOriginURL, err := p.cmdRunner.Run(ctx, "git", "config", "--get", "remote.origin.url")
+	remoteOriginURL = strings.Trim(remoteOriginURL, "\n")
+	if err != nil {
+		return errors.Wrapf(err, "Failed to get remote origin url: %s", remoteOriginURL)
+	}
+
+	output, err := p.cmdRunner.Run(ctx, "git", "ls-remote", "--heads", remoteOriginURL, branchName)
+	if err != nil {
+		return errors.Wrapf(err, "Failed to list remote branches: %s", output)
+	}
+	if strings.Contains(output, fmt.Sprintf("refs/heads/%s", branchName)) {
+		// Remote branch exists
+		if !confirm && !utils.AskUserYesNoQuestion(
+			fmt.Sprintf("Found branch '%s' in origin. Do you want to delete it?", branchName),
+		) {
+			return errors.New("User aborted")
+		}
+
+		output, err := p.cmdRunner.Run(ctx, "git", "push", "-d", "origin", branchName)
+		if err != nil {
+			return errors.Wrapf(err, "Failed to delete existing remote branch '%s': %s", branchName, output)
+		}
 	}
 
 	log.Debugf("Checking out new branch '%s'", branchName)
@@ -136,9 +161,8 @@ func (p *Publisher) Publish(ctx context.Context, filePaths []string) error {
 	prBody := fmt.Sprintf("# Update goplicate snippets\n\nUpdated files:\n\n%s", changedPathsStr)
 
 	log.Debug("Creating pull request")
-	resp, err := p.cmdRunner.Run(ctx, "gh", "pr", "create", "--title", commitMsg, "--body", prBody)
+	resp, err := p.cmdRunner.Run(ctx, "gh", "pr", "create", "--title", commitMsg, "--body", prBody, "--head", branchName)
 	resp = strings.TrimSuffix(resp, "\n")
-
 	alreadyExists := strings.Contains(resp, "already exists:")
 	if err != nil && !alreadyExists {
 		return errors.Wrapf(err, "Failed to create a PR: %s", resp)

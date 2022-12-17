@@ -92,7 +92,7 @@ func Run(ctx context.Context, config *ProjectConfig, cloner *git.Cloner, runOpts
 			return errors.New("User aborted")
 		}
 
-		if err := publisher.Publish(ctx, updatedTargetPaths); err != nil {
+		if err := publisher.Publish(ctx, updatedTargetPaths, runOpts.Confirm); err != nil {
 			return errors.Wrap(err, "Failed to publish changes")
 		}
 	}
