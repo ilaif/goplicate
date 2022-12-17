@@ -3,13 +3,14 @@ package cmd
 import "github.com/spf13/cobra"
 
 var runFlagsOpts struct {
-	dryRun       bool
-	confirm      bool
-	publish      bool
-	allowDirty   bool
-	force        bool
-	stashChanges bool
-	baseBranch   string
+	dryRun         bool
+	confirm        bool
+	publish        bool
+	allowDirty     bool
+	force          bool
+	stashChanges   bool
+	disableCleanup bool
+	baseBranch     string
 }
 
 func applyRunFlags(cmd *cobra.Command) {
@@ -23,5 +24,6 @@ func applyRunFlags(cmd *cobra.Command) {
 	cmd.Flags().BoolVar(&runFlagsOpts.stashChanges, "stash-changes", false,
 		"if the working tree is dirty, stash changes before running, and restore them when done",
 	)
+	cmd.Flags().BoolVar(&runFlagsOpts.disableCleanup, "disable-cleanup", false, "disable cleanup of cloned repositories")
 	cmd.Flags().StringVar(&runFlagsOpts.baseBranch, "base", "", "the base git branch to perform updates to")
 }

@@ -23,7 +23,10 @@ type RunOpts struct {
 	BaseBranch   string
 }
 
-func NewRunOpts(dryRun, confirm, publish, allowDirty, force, stashChanges bool, baseBranch string) *RunOpts {
+func NewRunOpts(
+	dryRun, confirm, publish, allowDirty, force, stashChanges bool,
+	baseBranch string,
+) *RunOpts {
 	return &RunOpts{
 		DryRun:       dryRun,
 		Confirm:      confirm,
@@ -35,8 +38,8 @@ func NewRunOpts(dryRun, confirm, publish, allowDirty, force, stashChanges bool, 
 	}
 }
 
-func Run(ctx context.Context, config *ProjectConfig, runOpts *RunOpts) error {
-	publisher := git.NewPublisher(runOpts.BaseBranch, ".")
+func Run(ctx context.Context, config *ProjectConfig, cloner *git.Cloner, runOpts *RunOpts) error {
+	publisher := git.NewPublisher(runOpts.BaseBranch, utils.MustGetwd())
 
 	if !runOpts.DryRun && runOpts.Publish {
 		if err := publisher.Init(ctx); err != nil {
@@ -65,7 +68,7 @@ func Run(ctx context.Context, config *ProjectConfig, runOpts *RunOpts) error {
 
 	updatedTargetPaths := []string{}
 	for _, target := range config.Targets {
-		if updated, err := runTarget(target, runOpts); err != nil {
+		if updated, err := runTarget(ctx, target, cloner, runOpts); err != nil {
 			return errors.Wrapf(err, "Target '%s'", target.Path)
 		} else if updated {
 			updatedTargetPaths = append(updatedTargetPaths, target.Path)
@@ -97,27 +100,34 @@ func Run(ctx context.Context, config *ProjectConfig, runOpts *RunOpts) error {
 	return nil
 }
 
-func runTarget(target Target, runOpts *RunOpts) (bool, error) {
+func runTarget(ctx context.Context, target Target, cloner *git.Cloner, runOpts *RunOpts) (bool, error) {
 	targetBlocks, err := parseBlocksFromFile(target.Path, nil)
 	if err != nil {
 		return false, errors.Wrap(err, "Failed to parse target blocks")
 	}
 
-	targetSource, err := parseTargetSource(target.Source)
+	workdir := utils.MustGetwd()
+
+	targetSourcePath, err := ResolveSourcePath(ctx, target.Source, workdir, cloner)
 	if err != nil {
-		return false, err
+		return false, errors.Wrap(err, "Failed to resolve source")
 	}
 
 	params := map[string]interface{}{}
-	for _, paramsPath := range target.ParamsPaths {
+	for _, targetParamsSource := range target.Params {
+		targetParamsPath, err := ResolveSourcePath(ctx, targetParamsSource, workdir, cloner)
+		if err != nil {
+			return false, errors.Wrap(err, "Failed to resolve source")
+		}
+
 		var curParams map[string]interface{}
-		if err := utils.ReadYaml(paramsPath, &curParams); err != nil {
+		if err := utils.ReadYaml(targetParamsPath, &curParams); err != nil {
 			return false, errors.Wrap(err, "Failed to parse params")
 		}
 		params = lo.Assign(params, curParams)
 	}
 
-	sourceBlocks, err := parseBlocksFromFile(targetSource.Path, params)
+	sourceBlocks, err := parseBlocksFromFile(targetSourcePath, params)
 	if err != nil {
 		return false, errors.Wrap(err, "Failed to parse source blocks")
 	}

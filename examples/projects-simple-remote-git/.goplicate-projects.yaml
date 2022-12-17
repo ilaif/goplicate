@@ -3,6 +3,5 @@
 
 projects:
   - location:
-      path: ../simple/repo-1
-  - location:
-      path: ../simple/repo-2
+      repository: https://github.com/ilaif/goplicate-example-repo-1
+      clone-path: cloned/repo-1

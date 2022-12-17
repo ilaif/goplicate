@@ -5,6 +5,8 @@
 targets:
   - path: .eslintrc.js
     source:
-      path: ../shared-configs-repo/.eslintrc.js
+      repository: https://github.com/ilaif/goplicate-example-shared-configs
+      path: .eslintrc.js
     params:
-      - path: ../shared-configs-repo/params.yaml
+      - repository: https://github.com/ilaif/goplicate-example-shared-configs
+        path: params.yaml

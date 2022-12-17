@@ -13,6 +13,7 @@ import (
 	"github.com/ilaif/goplicate/pkg/utils"
 )
 
+// Publisher publishes changes to git, including opening PRs
 type Publisher struct {
 	baseBranch string
 	dir        string
