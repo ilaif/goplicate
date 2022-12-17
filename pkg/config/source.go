@@ -17,7 +17,7 @@ type Source struct {
 	ClonePath  string        `yaml:"clone-path"`
 }
 
-func (s Source) String() string {
+func (s *Source) String() string {
 	if s.Repository == "" {
 		return s.Path
 	}
@@ -36,7 +36,7 @@ func (s Source) String() string {
 	return source
 }
 
-func (s Source) Validate() error {
+func (s *Source) Validate() error {
 	if s.Repository == "" && s.Path == "" {
 		return errors.New("At least one of 'repository', 'path' should be specified")
 	}

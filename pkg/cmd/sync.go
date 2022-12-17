@@ -50,12 +50,7 @@ func NewSyncCmd() *cobra.Command {
 					return err
 				}
 
-				projectConfig, err := config.LoadProjectConfig()
-				if err != nil {
-					return err
-				}
-
-				if err := pkg.Run(ctx, projectConfig, cloner, pkg.NewRunOpts(
+				if err := pkg.Run(ctx, cloner, pkg.NewRunOpts(
 					runFlagsOpts.dryRun,
 					runFlagsOpts.confirm,
 					runFlagsOpts.publish,

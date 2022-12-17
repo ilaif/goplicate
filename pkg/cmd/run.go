@@ -5,7 +5,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ilaif/goplicate/pkg"
-	"github.com/ilaif/goplicate/pkg/config"
 	"github.com/ilaif/goplicate/pkg/git"
 	"github.com/ilaif/goplicate/pkg/utils"
 )
@@ -25,17 +24,12 @@ func NewRunCmd() *cobra.Command {
 			}
 			defer chToOrigWorkdir()
 
-			cfg, err := config.LoadProjectConfig()
-			if err != nil {
-				return err
-			}
-
 			cloner := git.NewCloner()
 			if !runFlagsOpts.disableCleanup {
 				defer cloner.Close()
 			}
 
-			if err := pkg.Run(ctx, cfg, cloner, pkg.NewRunOpts(
+			if err := pkg.Run(ctx, cloner, pkg.NewRunOpts(
 				runFlagsOpts.dryRun,
 				runFlagsOpts.confirm,
 				runFlagsOpts.publish,
