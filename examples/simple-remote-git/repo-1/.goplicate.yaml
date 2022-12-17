@@ -5,10 +5,8 @@
 targets:
   - path: .eslintrc.js
     source:
-      repository: https://github.com/ilaif/goplicate
-      branch: chore/support-remote-git-sources
-      path: examples/simple-remote-git/shared-configs-repo/.eslintrc.js
+      repository: https://github.com/ilaif/goplicate-example-shared-configs
+      path: .eslintrc.js
     params:
-      - repository: https://github.com/ilaif/goplicate
-        branch: chore/support-remote-git-sources
-        path: examples/simple-remote-git/shared-configs-repo/params.yaml
+      - repository: https://github.com/ilaif/goplicate-example-shared-configs
+        path: params.yaml

@@ -3,12 +3,5 @@
 
 projects:
   - location:
-      repository: https://github.com/ilaif/goplicate
-      branch: chore/support-remote-git-sources
-      path: examples/simple-remote-git/repo-1
-      clone-path: ../cloned/repo-1
-  - location:
-      repository: https://github.com/ilaif/goplicate
-      branch: chore/support-remote-git-sources
-      path: examples/simple-remote-git/repo-2
-      clone-path: ../cloned/repo-2
+      repository: https://github.com/ilaif/goplicate-example-repo-1
+      clone-path: cloned/repo-1

@@ -48,6 +48,10 @@ type Project struct {
 }
 
 func (p *Project) Validate() error {
+	if (p.Location.Repository != "" && p.Location.Path != "") || (p.Location.Repository == "" && p.Location.Path == "") {
+		return errors.New("Exactly one of 'repository', 'path' should be specified")
+	}
+
 	if err := p.Location.Validate(); err != nil {
 		return errors.Wrap(err, "'location' is invalid")
 	}
@@ -102,12 +106,18 @@ func (s Source) String() string {
 	if s.Branch != "" {
 		source += fmt.Sprintf("@(%s)", s.Branch)
 	}
-	source += fmt.Sprintf("/%s", s.Path)
+	if s.Path != "" {
+		source += fmt.Sprintf("/%s", s.Path)
+	}
 
 	return source
 }
 
 func (s Source) Validate() error {
+	if s.Repository == "" && s.Path == "" {
+		return errors.New("At least one of 'repository', 'path' should be specified")
+	}
+
 	if s.Repository != "" {
 		if err := s.Repository.Validate(); err != nil {
 			return errors.Wrap(err, "'repository' is invalid")
@@ -115,11 +125,11 @@ func (s Source) Validate() error {
 	}
 
 	if s.Tag != "" && s.Branch != "" {
-		return errors.New("Only one of 'branch', 'tag' can be set")
+		return errors.New("Only one of 'branch', 'tag' can be specified")
 	}
 
 	if s.Repository == "" && (s.Tag != "" || s.Branch != "") {
-		return errors.New("'branch' or 'tag' require 'repository' to be set")
+		return errors.New("'branch' or 'tag' require 'repository' to be specified")
 	}
 
 	return nil

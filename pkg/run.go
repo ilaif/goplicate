@@ -39,7 +39,7 @@ func NewRunOpts(
 }
 
 func Run(ctx context.Context, config *ProjectConfig, cloner *git.Cloner, runOpts *RunOpts) error {
-	publisher := git.NewPublisher(runOpts.BaseBranch, ".")
+	publisher := git.NewPublisher(runOpts.BaseBranch, utils.MustGetwd())
 
 	if !runOpts.DryRun && runOpts.Publish {
 		if err := publisher.Init(ctx); err != nil {
