@@ -8,6 +8,7 @@ require (
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/otiai10/copy v1.7.0
 	github.com/pkg/errors v0.9.1
+	github.com/pkg/fileutils v0.0.0-20181114200823-d734b7f202ba
 	github.com/samber/lo v1.27.0
 	github.com/sergi/go-diff v1.1.0
 	github.com/spf13/cobra v1.5.0

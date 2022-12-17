@@ -5,13 +5,14 @@ import (
 	"path"
 
 	"github.com/caarlos0/log"
+	"github.com/pkg/errors"
 
 	"github.com/ilaif/goplicate/pkg/git"
 )
 
 // ResolveSourcePath given a source, resolves it by cloning the repository (if applicable)
 // and returning the directory of the source.
-func ResolveSourcePath(ctx context.Context, source Source, workdir string, cloner *git.Cloner) (string, error) {
+func ResolveSourcePath(ctx context.Context, source Source, workdir string, cloner git.Cloner) (string, error) {
 	log.Debugf("Resolving path of source '%s'", source.String())
 
 	var err error
@@ -29,7 +30,7 @@ func ResolveSourcePath(ctx context.Context, source Source, workdir string, clone
 		}
 		dir, err = cloner.Clone(ctx, string(source.Repository), branch, absClonePath)
 		if err != nil {
-			return "", err
+			return "", errors.Wrap(err, "Failed to clone repository")
 		}
 	}
 

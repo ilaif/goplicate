@@ -64,6 +64,9 @@ type Target struct {
 	Path   string   `yaml:"path"`
 	Source Source   `yaml:"source"`
 	Params []Source `yaml:"params"`
+	// SyncInitial whether to copy the whole file
+	// from the source if it doesn't exist.
+	SyncInitial bool `yaml:"sync-initial"`
 }
 
 func (t *Target) Validate() error {

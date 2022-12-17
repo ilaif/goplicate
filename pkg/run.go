@@ -2,11 +2,13 @@ package pkg
 
 import (
 	"context"
+	"os"
 	"os/exec"
 	"strings"
 
 	"github.com/caarlos0/log"
 	"github.com/pkg/errors"
+	"github.com/pkg/fileutils"
 	"github.com/samber/lo"
 
 	"github.com/ilaif/goplicate/pkg/git"
@@ -38,7 +40,7 @@ func NewRunOpts(
 	}
 }
 
-func Run(ctx context.Context, config *ProjectConfig, cloner *git.Cloner, runOpts *RunOpts) error {
+func Run(ctx context.Context, config *ProjectConfig, cloner git.Cloner, runOpts *RunOpts) error {
 	publisher := git.NewPublisher(runOpts.BaseBranch, utils.MustGetwd())
 
 	if !runOpts.DryRun && runOpts.Publish {
@@ -100,34 +102,43 @@ func Run(ctx context.Context, config *ProjectConfig, cloner *git.Cloner, runOpts
 	return nil
 }
 
-func runTarget(ctx context.Context, target Target, cloner *git.Cloner, runOpts *RunOpts) (bool, error) {
+func runTarget(ctx context.Context, target Target, cloner git.Cloner, runOpts *RunOpts) (bool, error) {
+	workdir := utils.MustGetwd()
+
+	sourcePath, err := ResolveSourcePath(ctx, target.Source, workdir, cloner)
+	if err != nil {
+		return false, errors.Wrapf(err, "Failed to resolve source '%s'", target.Source.String())
+	}
+
+	if target.SyncInitial {
+		if _, err := os.Stat(target.Path); errors.Is(err, os.ErrNotExist) {
+			log.Infof("Syncing initial state of '%s' from '%s'", target.Path, sourcePath)
+			if err := fileutils.CopyFile(target.Path, sourcePath); err != nil {
+				return false, errors.Wrapf(err, "Failed to copy '%s' to '%s'", sourcePath, target.Path)
+			}
+		}
+	}
+
 	targetBlocks, err := parseBlocksFromFile(target.Path, nil)
 	if err != nil {
 		return false, errors.Wrap(err, "Failed to parse target blocks")
 	}
 
-	workdir := utils.MustGetwd()
-
-	targetSourcePath, err := ResolveSourcePath(ctx, target.Source, workdir, cloner)
-	if err != nil {
-		return false, errors.Wrap(err, "Failed to resolve source")
-	}
-
 	params := map[string]interface{}{}
-	for _, targetParamsSource := range target.Params {
-		targetParamsPath, err := ResolveSourcePath(ctx, targetParamsSource, workdir, cloner)
+	for _, paramsSource := range target.Params {
+		paramsPath, err := ResolveSourcePath(ctx, paramsSource, workdir, cloner)
 		if err != nil {
-			return false, errors.Wrap(err, "Failed to resolve source")
+			return false, errors.Wrapf(err, "Failed to resolve source '%s'", paramsSource.String())
 		}
 
 		var curParams map[string]interface{}
-		if err := utils.ReadYaml(targetParamsPath, &curParams); err != nil {
+		if err := utils.ReadYaml(paramsPath, &curParams); err != nil {
 			return false, errors.Wrap(err, "Failed to parse params")
 		}
 		params = lo.Assign(params, curParams)
 	}
 
-	sourceBlocks, err := parseBlocksFromFile(targetSourcePath, params)
+	sourceBlocks, err := parseBlocksFromFile(sourcePath, params)
 	if err != nil {
 		return false, errors.Wrap(err, "Failed to parse source blocks")
 	}
