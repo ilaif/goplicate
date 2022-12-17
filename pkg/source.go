@@ -23,7 +23,11 @@ func ResolveSourcePath(ctx context.Context, source Source, workdir string, clone
 
 	dir := workdir
 	if source.Repository != "" {
-		dir, err = cloner.Clone(ctx, string(source.Repository), branch)
+		absClonePath := ""
+		if source.ClonePath != "" {
+			absClonePath = path.Join(workdir, source.ClonePath)
+		}
+		dir, err = cloner.Clone(ctx, string(source.Repository), branch, absClonePath)
 		if err != nil {
 			return "", err
 		}

@@ -30,7 +30,9 @@ func NewRunCmd() *cobra.Command {
 			}
 
 			cloner := git.NewCloner()
-			defer cloner.Close()
+			if !runFlagsOpts.disableCleanup {
+				defer cloner.Close()
+			}
 
 			if err := pkg.Run(ctx, config, cloner, pkg.NewRunOpts(
 				runFlagsOpts.dryRun,

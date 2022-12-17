@@ -1,12 +1,14 @@
 package cmd_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/ilaif/goplicate/pkg/cmd"
 	"github.com/ilaif/goplicate/pkg/cmd/testutils"
+	"github.com/ilaif/goplicate/pkg/utils"
 )
 
 func TestSyncCmd_Simple(t *testing.T) {
@@ -38,11 +40,19 @@ func TestSyncCmd_RemoteGit(t *testing.T) {
 	testutils.RequireFileContains(r, "../simple-remote-git/repo-1/.eslintrc.js", "indent: ['error', 4]")
 	testutils.RequireFileContains(r, "../simple-remote-git/repo-2/.eslintrc.js", "indent: ['error', 4]")
 
-	syncCmd := cmd.NewSyncCmd()
-	syncCmd.SetArgs([]string{"--confirm"})
+	rootCmd := cmd.NewRootCmd("")
+	rootCmd.SetArgs([]string{"sync", "--confirm", "--disable-cleanup", "--debug"})
 
-	r.NoError(syncCmd.Execute())
+	r.NoError(rootCmd.Execute())
 
-	testutils.RequireFileContains(r, "../simple-remote-git/repo-1/.eslintrc.js", "indent: ['error', 2]")
-	testutils.RequireFileContains(r, "../simple-remote-git/repo-2/.eslintrc.js", "indent: ['error', 2]")
+	fmt.Println(utils.MustGetwd())
+
+	testutils.RequireFileContains(r,
+		"../cloned/repo-1/examples/simple-remote-git/repo-1/.eslintrc.js",
+		"indent: ['error', 2]",
+	)
+	testutils.RequireFileContains(r,
+		"../cloned/repo-2/examples/simple-remote-git/repo-2/.eslintrc.js",
+		"indent: ['error', 2]",
+	)
 }

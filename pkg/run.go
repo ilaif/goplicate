@@ -23,7 +23,10 @@ type RunOpts struct {
 	BaseBranch   string
 }
 
-func NewRunOpts(dryRun, confirm, publish, allowDirty, force, stashChanges bool, baseBranch string) *RunOpts {
+func NewRunOpts(
+	dryRun, confirm, publish, allowDirty, force, stashChanges bool,
+	baseBranch string,
+) *RunOpts {
 	return &RunOpts{
 		DryRun:       dryRun,
 		Confirm:      confirm,

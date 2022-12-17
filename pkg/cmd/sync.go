@@ -32,7 +32,9 @@ func NewSyncCmd() *cobra.Command {
 
 			workdir := utils.MustGetwd()
 			cloner := git.NewCloner()
-			defer cloner.Close()
+			if !runFlagsOpts.disableCleanup {
+				defer cloner.Close()
+			}
 
 			for _, project := range config.Projects {
 				projectAbsPath, err := pkg.ResolveSourcePath(ctx, project.Location, workdir, cloner)
@@ -65,7 +67,7 @@ func NewSyncCmd() *cobra.Command {
 				}
 
 				log.DecreasePadding()
-				log.Infof("Syncing project %s done", projectAbsPath)
+				log.Infof("Done syncing project %s", projectAbsPath)
 			}
 
 			log.Infof("Syncing complete")

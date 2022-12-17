@@ -82,10 +82,12 @@ func (t *Target) Validate() error {
 
 // Source a path to a file. Can be from a `repository` if one is specified. Otherwise, assumes a local path.
 type Source struct {
+	Path string `yaml:"path"`
+
 	Repository RepositoryURI `yaml:"repository"`
 	Tag        string        `yaml:"tag"`
 	Branch     string        `yaml:"branch"`
-	Path       string        `yaml:"path"`
+	ClonePath  string        `yaml:"clone-path"`
 }
 
 func (s Source) String() string {

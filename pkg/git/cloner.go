@@ -28,17 +28,34 @@ func NewCloner() *Cloner {
 
 // Clone clones the repository into a temporary dir and returns it.
 // Caches to avoid cloning the same repository twice.
-func (c *Cloner) Clone(ctx context.Context, uri string, branch string) (string, error) {
+func (c *Cloner) Clone(ctx context.Context, uri string, branch string, clonePath string) (string, error) {
 	if tempdir, ok := c.repositories[uri]; ok {
-		log.Debugf("Found repository '%s' in cache. Dir is '%s'", uri, tempdir)
+		log.Debugf("Found repository '%s' in cache in directory '%s'", uri, tempdir)
+
+		// If there's a clone path and its different from an existing one in
+		// the same directory, then we want to symlink to be able to reference it
+		if clonePath != "" && tempdir != clonePath {
+			if err := os.Symlink(tempdir, clonePath); err != nil {
+				return "", errors.Wrapf(err, "Failed to create symlink '%s' for '%s'", tempdir, clonePath)
+			}
+		}
 
 		return tempdir, nil
 	}
 
 	dirPattern := validPathRegexp.ReplaceAllString("_goplicate_"+uri, "_")
-	tempdir, err := os.MkdirTemp(os.TempDir(), dirPattern)
-	if err != nil {
-		return "", errors.Wrapf(err, "Failed to create tempdir '%s'", dirPattern)
+
+	var err error
+	tempdir := clonePath
+	if tempdir != "" {
+		if err := os.MkdirAll(tempdir, 0750); err != nil {
+			return "", errors.Wrapf(err, "Failed to create dir '%s'", tempdir)
+		}
+	} else {
+		tempdir, err = os.MkdirTemp(os.TempDir(), dirPattern)
+		if err != nil {
+			return "", errors.Wrapf(err, "Failed to create tempdir '%s'", dirPattern)
+		}
 	}
 
 	cmdRunner := utils.NewCommandRunner(tempdir)

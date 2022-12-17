@@ -7,6 +7,8 @@ import (
 
 	cp "github.com/otiai10/copy"
 	"github.com/stretchr/testify/require"
+
+	"github.com/ilaif/goplicate/pkg/utils"
 )
 
 func PrepareWorkdir(t *testing.T, source string, cd string) func() {
@@ -26,7 +28,7 @@ func PrepareWorkdir(t *testing.T, source string, cd string) func() {
 }
 
 func RequireFileContains(r *require.Assertions, filepath string, contains string) {
-	bytes, err := os.ReadFile(filepath)
+	bytes, err := os.ReadFile(path.Join(utils.MustGetwd(), filepath))
 	r.NoError(err)
 	contents := string(bytes)
 	r.Contains(contents, contains)
