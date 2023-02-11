@@ -8,6 +8,7 @@ import (
 
 	"github.com/ilaif/goplicate/pkg/config"
 	"github.com/ilaif/goplicate/pkg/git"
+	"github.com/ilaif/goplicate/pkg/shared"
 	"github.com/ilaif/goplicate/pkg/utils"
 )
 
@@ -19,11 +20,12 @@ type RunOpts struct {
 	Force        bool
 	StashChanges bool
 	BaseBranch   string
+	Branch       string
 }
 
 func NewRunOpts(
 	dryRun, confirm, publish, allowDirty, force, stashChanges bool,
-	baseBranch string,
+	baseBranch, branch string,
 ) *RunOpts {
 	return &RunOpts{
 		DryRun:       dryRun,
@@ -33,10 +35,16 @@ func NewRunOpts(
 		Force:        force,
 		StashChanges: stashChanges,
 		BaseBranch:   baseBranch,
+		Branch:       branch,
 	}
 }
 
-func Run(ctx context.Context, cloner git.Cloner, runOpts *RunOpts) error {
+func Run(
+	ctx context.Context,
+	cloner git.Cloner,
+	sharedState *shared.State,
+	runOpts *RunOpts,
+) error {
 	cfg, err := config.LoadProjectConfig()
 	if err != nil {
 		return err
@@ -60,7 +68,7 @@ func Run(ctx context.Context, cloner git.Cloner, runOpts *RunOpts) error {
 		}
 	}
 
-	publisher := git.NewPublisher(runOpts.BaseBranch, utils.MustGetwd())
+	publisher := git.NewPublisher(sharedState, runOpts.BaseBranch, utils.MustGetwd(), runOpts.Branch)
 
 	if !runOpts.DryRun && runOpts.Publish {
 		if err := publisher.Init(ctx); err != nil {

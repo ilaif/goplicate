@@ -8,6 +8,7 @@ import (
 	"github.com/ilaif/goplicate/pkg"
 	"github.com/ilaif/goplicate/pkg/config"
 	"github.com/ilaif/goplicate/pkg/git"
+	"github.com/ilaif/goplicate/pkg/shared"
 	"github.com/ilaif/goplicate/pkg/utils"
 )
 
@@ -37,6 +38,10 @@ func NewSyncCmd() *cobra.Command {
 				defer cloner.Close()
 			}
 
+			sharedState := &shared.State{
+				Message: runFlagsOpts.message,
+			}
+
 			for _, project := range cfg.Projects {
 				projectAbsPath, err := pkg.ResolveSourcePath(ctx, project.Location, workdir, cloner)
 				if err != nil {
@@ -50,7 +55,7 @@ func NewSyncCmd() *cobra.Command {
 					return err
 				}
 
-				if err := pkg.Run(ctx, cloner, pkg.NewRunOpts(
+				if err := pkg.Run(ctx, cloner, sharedState, pkg.NewRunOpts(
 					runFlagsOpts.dryRun,
 					runFlagsOpts.confirm,
 					runFlagsOpts.publish,
@@ -58,6 +63,7 @@ func NewSyncCmd() *cobra.Command {
 					runFlagsOpts.force,
 					runFlagsOpts.stashChanges,
 					runFlagsOpts.baseBranch,
+					runFlagsOpts.branch,
 				)); err != nil {
 					return errors.Wrapf(err, "Failed to sync project '%s'", projectAbsPath)
 				}
