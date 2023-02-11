@@ -88,15 +88,21 @@ func RunTarget(ctx context.Context, target config.Target, cloner git.Cloner, dry
 		return false, nil
 	}
 
-	if !confirm && !utils.AskUserYesNoQuestion("Do you want to apply the above changes?") {
-		return false, errors.New("User aborted")
-	}
-
-	if err := utils.WriteStringToFile(target.Path, targetBlocks.Render()); err != nil {
+	question := "Do you want to apply the above changes?"
+	answer, err := utils.PromptUserYesNoQuestion(question, confirm)
+	if err != nil {
 		return false, err
 	}
 
-	log.Infof("Target '%s': Updated", target.Path)
+	if answer {
+		if err := utils.WriteStringToFile(target.Path, targetBlocks.Render()); err != nil {
+			return false, err
+		}
+
+		log.Infof("Target '%s': Updated", target.Path)
+	} else {
+		log.Infof("Target '%s': Skipped", target.Path)
+	}
 
 	return true, nil
 }

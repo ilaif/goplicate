@@ -108,12 +108,13 @@ func Run(ctx context.Context, cloner git.Cloner, runOpts *RunOpts) error {
 	}
 
 	if !runOpts.DryRun && runOpts.Publish {
-		if !runOpts.Confirm && !utils.AskUserYesNoQuestion("Do you want to publish the above changes?") {
-			return errors.New("User aborted")
-		}
-
-		if err := publisher.Publish(ctx, updatedTargetPaths, runOpts.Confirm); err != nil {
-			return errors.Wrap(err, "Failed to publish changes")
+		question := "Do you want to publish the above changes?"
+		if answer, err := utils.PromptUserYesNoQuestion(question, runOpts.Confirm); err != nil {
+			return err
+		} else if answer {
+			if err := publisher.Publish(ctx, updatedTargetPaths, runOpts.Confirm); err != nil {
+				return errors.Wrap(err, "Failed to publish changes")
+			}
 		}
 	}
 
