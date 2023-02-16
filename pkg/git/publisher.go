@@ -121,15 +121,19 @@ func (p *Publisher) Publish(ctx context.Context, filePaths []string, confirm boo
 	}
 	if strings.Contains(output, fmt.Sprintf("refs/heads/%s", branchName)) {
 		// Remote branch exists
-		if !confirm && !utils.AskUserYesNoQuestion(
-			fmt.Sprintf("Found branch '%s' in origin. Do you want to delete it?", branchName),
-		) {
-			return errors.New("User aborted")
+		question := fmt.Sprintf("Found branch '%s' in origin. Do you want to delete it?", branchName)
+		answer, err := utils.PromptUserYesNoQuestion(question, confirm)
+		if err != nil {
+			return err
 		}
 
-		output, err := p.cmdRunner.Run(ctx, "git", "push", "-d", "origin", branchName)
-		if err != nil {
-			return errors.Wrapf(err, "Failed to delete existing remote branch '%s': %s", branchName, output)
+		if answer {
+			output, err := p.cmdRunner.Run(ctx, "git", "push", "-d", "origin", branchName)
+			if err != nil {
+				return errors.Wrapf(err, "Failed to delete existing remote branch '%s': %s", branchName, output)
+			}
+		} else {
+			log.Infof("Skipped deletion of branch '%s'", branchName)
 		}
 	}
 
