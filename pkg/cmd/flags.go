@@ -1,6 +1,8 @@
 package cmd
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/spf13/cobra"
+)
 
 var runFlagsOpts struct {
 	dryRun         bool
@@ -11,6 +13,8 @@ var runFlagsOpts struct {
 	stashChanges   bool
 	disableCleanup bool
 	baseBranch     string
+	branch         string
+	message        string
 }
 
 func applyRunFlags(cmd *cobra.Command) {
@@ -25,5 +29,7 @@ func applyRunFlags(cmd *cobra.Command) {
 		"if the working tree is dirty, stash changes before running, and restore them when done",
 	)
 	cmd.Flags().BoolVar(&runFlagsOpts.disableCleanup, "disable-cleanup", false, "disable cleanup of cloned repositories")
-	cmd.Flags().StringVar(&runFlagsOpts.baseBranch, "base", "", "the base git branch to perform updates to")
+	cmd.Flags().StringVar(&runFlagsOpts.baseBranch, "base", "", "base git branch to perform updates to")
+	cmd.Flags().StringVar(&runFlagsOpts.branch, "branch", "", "name of the new branch to be checked out")
+	cmd.Flags().StringVar(&runFlagsOpts.message, "message", "", "pull request description message. supports markdown.")
 }

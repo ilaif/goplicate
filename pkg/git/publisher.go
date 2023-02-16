@@ -10,23 +10,26 @@ import (
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
 
+	"github.com/ilaif/goplicate/pkg/shared"
 	"github.com/ilaif/goplicate/pkg/utils"
 )
 
 // Publisher publishes changes to git, including opening PRs
 type Publisher struct {
-	baseBranch string
-	dir        string
-	cmdRunner  *utils.CommandRunner
+	sharedState *shared.State
+	baseBranch  string
+	dir         string
+	branch      string
 
-	repo   *git.Repository
-	status git.Status
+	cmdRunner *utils.CommandRunner
+	repo      *git.Repository
+	status    git.Status
 }
 
-func NewPublisher(baseBranch string, dir string) *Publisher {
+func NewPublisher(sharedState *shared.State, baseBranch string, dir string, branch string) *Publisher {
 	cmdRunner := utils.NewCommandRunner(dir)
 
-	return &Publisher{baseBranch: baseBranch, dir: dir, cmdRunner: cmdRunner}
+	return &Publisher{sharedState: sharedState, baseBranch: baseBranch, dir: dir, branch: branch, cmdRunner: cmdRunner}
 }
 
 func (p *Publisher) Init(ctx context.Context) error {
@@ -103,6 +106,9 @@ func (p *Publisher) Publish(ctx context.Context, filePaths []string, confirm boo
 
 	log.Debug("Fetching HEAD reference")
 	branchName := "chore/update-goplicate-snippets"
+	if p.branch != "" {
+		branchName = p.branch
+	}
 
 	log.Debugf("Deleting existing branch '%s' if exists", branchName)
 	if output, err := p.cmdRunner.Run(ctx, "git", "branch", "-D", branchName); err != nil {
@@ -161,8 +167,27 @@ func (p *Publisher) Publish(ctx context.Context, filePaths []string, confirm boo
 		return errors.Wrapf(err, "Failed to push changes: %s", output)
 	}
 
-	changedPathsStr := strings.Join(lo.Map(filePaths, func(path string, _ int) string { return "* " + path }), "\n")
-	prBody := fmt.Sprintf("# Update goplicate snippets\n\nUpdated files:\n\n%s", changedPathsStr)
+	prBody := "# Update goplicate snippets"
+	// Populate the shared state with the user input
+	if !confirm && p.sharedState.Message == "" {
+		question := "Do you want to open a text editor to modify the change request message?"
+		answer, err := utils.PromptUserYesNoQuestion(question, confirm)
+		if err != nil {
+			return err
+		}
+
+		if answer {
+			output, err := utils.OpenTextEditor(ctx, prBody)
+			if err != nil {
+				return errors.Wrap(err, "Failed to prompt for message")
+			}
+
+			p.sharedState.Message = output
+		}
+	}
+	if p.sharedState.Message != "" {
+		prBody = p.sharedState.Message
+	}
 
 	log.Debug("Creating pull request")
 	resp, err := p.cmdRunner.Run(ctx, "gh", "pr", "create", "--title", commitMsg, "--body", prBody, "--head", branchName)

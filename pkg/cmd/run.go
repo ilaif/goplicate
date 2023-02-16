@@ -6,6 +6,7 @@ import (
 
 	"github.com/ilaif/goplicate/pkg"
 	"github.com/ilaif/goplicate/pkg/git"
+	"github.com/ilaif/goplicate/pkg/shared"
 	"github.com/ilaif/goplicate/pkg/utils"
 )
 
@@ -29,7 +30,11 @@ func NewRunCmd() *cobra.Command {
 				defer cloner.Close()
 			}
 
-			if err := pkg.Run(ctx, cloner, pkg.NewRunOpts(
+			sharedState := &shared.State{
+				Message: runFlagsOpts.message,
+			}
+
+			if err := pkg.Run(ctx, cloner, sharedState, pkg.NewRunOpts(
 				runFlagsOpts.dryRun,
 				runFlagsOpts.confirm,
 				runFlagsOpts.publish,
@@ -37,6 +42,7 @@ func NewRunCmd() *cobra.Command {
 				runFlagsOpts.force,
 				runFlagsOpts.stashChanges,
 				runFlagsOpts.baseBranch,
+				runFlagsOpts.branch,
 			)); err != nil {
 				return err
 			}
